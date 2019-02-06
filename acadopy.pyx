@@ -289,13 +289,21 @@ cdef class Function:
     """ Python wrapper of the Function class 
     """
 
-    def __cinit__(self):
-        self._thisptr = new acado.Function()
+    def __cinit__(self, initialize=True):
+        if initialize:
+            self._thisptr = new acado.Function()
+            self._owner = True
+        else:
+            self._owner = False
 
+    def __dealloc__(self):
+        if self._owner:
+            del self._thisptr
 
     def __lshift__(self, other):
         cdef Expression rhs
         cdef Function lhs
+        cdef Function result
         cdef acado.Function _function
 
         if isinstance(self, Function) and isinstance(other, Expression):
@@ -305,7 +313,16 @@ cdef class Function:
 
             _function << deref(rhs._thisptr)
 
-            return self
+            result = Function(initialize=False)
+            result._thisptr = new acado.Function(_function)
+            result._owner = True
+
+            print('--- DEBUG __ Function.__lshift__')
+            print(_function.getDim(), _function.getN(), _function.getNX())
+            print(result._thisptr.getDim(), result._thisptr.getN(), result._thisptr.getNX())
+            print(lhs._thisptr.getDim(), lhs._thisptr.getN(), lhs._thisptr.getNX())
+
+            return result
         else:
             return NotImplemented
 
@@ -330,7 +347,11 @@ cdef class Function:
 
 cdef class DifferentialEquation(Function):
 
-    def __cinit__(self, start=None, end=None):
+    def __cinit__(self, start=None, end=None, initialize=True):
+        if not initialize:
+            self._owner = False
+            return 
+
         cdef float dstart
         cdef Parameter pend 
         cdef acado.Parameter _parameter
@@ -342,15 +363,17 @@ cdef class DifferentialEquation(Function):
             pend = end
             _parameter = deref(<acado.Parameter*>pend._thisptr)
             self._thisptr = new acado.DifferentialEquation(<double>start, _parameter)
-
+        self._owner = True
     
     def __eq__(self, other):
+        print ('DifferentialEq.__eq__', type(self), type(other))
         if not isinstance(other, Expression):
             return NotImplemented
         
         cdef acado.DifferentialEquation _result
         cdef Expression rhs
         cdef DifferentialEquation lhs
+        cdef DifferentialEquation result
 
         lhs = self
         rhs = other
@@ -359,7 +382,35 @@ cdef class DifferentialEquation(Function):
 
         _result == deref(rhs._thisptr)
 
-        return self    
+        result = DifferentialEquation(initialize=False)
+        result._thisptr = new acado.DifferentialEquation(_result)
+        result._owner = True
+
+        return result    
+
+    def __lshift__(self, other):
+        cdef Expression rhs
+        cdef DifferentialEquation lhs
+        cdef DifferentialEquation result
+        cdef acado.DifferentialEquation _diffeq
+
+        if isinstance(self, Function) and isinstance(other, Expression):
+            lhs = self
+            rhs = other
+            _diffeq = deref(<acado.DifferentialEquation*>lhs._thisptr)
+
+            _diffeq << deref(rhs._thisptr)
+
+            result = DifferentialEquation(initialize=False)
+            result._thisptr = new acado.DifferentialEquation(_diffeq)
+            result._owner = True
+
+            print(_diffeq.getDim(), _diffeq.getN(), _diffeq.getNX())
+            print(result._thisptr.getDim(), result._thisptr.getN(), result._thisptr.getNX())
+
+            return result
+        else:
+            return NotImplemented
 
 cdef class OCP:
 

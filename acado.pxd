@@ -97,15 +97,14 @@ cdef extern from 'acado/symbolic_expression/variable_types.hpp' namespace 'ACADO
 cdef extern from 'acado/function/function_.hpp' namespace 'ACADO':
     cdef cppclass Function:
         Function()
+        Function(const Function&)
 
         Function& operator<< (const Expression&)
-
 
         int getDim()
         int getN()
         int getNX()
         int getNU()
-
 
         BooleanType isConvex()
 
@@ -113,11 +112,12 @@ cdef extern from 'acado/function/differential_equation.hpp' namespace 'ACADO':
 
     cdef cppclass DifferentialEquation(Function):
         DifferentialEquation()
+        DifferentialEquation(const DifferentialEquation&)
         DifferentialEquation(const double &tStart, const double &tEnd )
         DifferentialEquation(const double &tStart, const Parameter &tEnd )
 
-        DifferentialEquation& operator<<( const Expression&)
-        DifferentialEquation& operator==( const Expression&)
+        DifferentialEquation& operator==(const Expression&)
+        #DifferentialEquation& operator<<(const Expression&)
 
 cdef extern from 'acado/utils/acado_types.hpp' namespace 'ACADO':
 
