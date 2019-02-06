@@ -16,7 +16,7 @@ setup(
             include_dirs=[
                 '/usr/local/include/acado/', 
                 '/usr/local/include/acado/external_packages/eigen3/'
-            ] + eigency.get_includes()
+            ]
         )
     ],
     cmdclass={'build_ext': build_ext},
