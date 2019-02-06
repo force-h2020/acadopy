@@ -65,7 +65,15 @@ class AcadoTestCase(unittest.TestCase):
 
         expression = exp(x + 1)
 
+        self.assertEqual(f.dim, 0)
+        self.assertEqual(f.nx, 0)
+
         f << expression
+        self.assertEqual(f.dim, 1)
+        self.assertEqual(f.nx, 1)
+
+
+
 
     def test_simple_function(self):
         x = DifferentialState()
