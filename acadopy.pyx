@@ -6,6 +6,12 @@ cimport acado
 AT_START = acado.TimeHorizonElement.AT_START
 AT_END = acado.TimeHorizonElement.AT_END
 
+HESSIAN_APPROXIMATION = acado.OptionsName.HESSIAN_APPROXIMATION
+MAX_NUM_ITERATIONS = acado.OptionsName.MAX_NUM_ITERATIONS
+KKT_TOLERANCE = acado.OptionsName.KKT_TOLERANCE
+
+EXACT_HESSIAN = acado.HessianApproximationMode.EXACT_HESSIAN
+
 cdef class DMatrix:
 
     def __cinit__(self, nrows=0, ncols=0):
@@ -324,12 +330,18 @@ cdef class Function:
 
 cdef class DifferentialEquation(Function):
 
-    def __cinit__(self, start, end):
-        # FIXME: support other constructors
-        cdef float dstart = start
-        cdef Parameter pend = end
-        cdef acado.Parameter _parameter = deref(<acado.Parameter*>pend._thisptr)
-        self._thisptr = new acado.DifferentialEquation(<double>start, _parameter)
+    def __cinit__(self, start=None, end=None):
+        cdef float dstart
+        cdef Parameter pend 
+        cdef acado.Parameter _parameter
+        if start == end == None:
+            self._thisptr = new acado.DifferentialEquation()
+        else:
+            # FIXME: support other constructors
+            dstart = start
+            pend = end
+            _parameter = deref(<acado.Parameter*>pend._thisptr)
+            self._thisptr = new acado.DifferentialEquation(<double>start, _parameter)
 
     
     def __eq__(self, other):
@@ -382,6 +394,10 @@ cdef class OCP:
         cdef Expression expression = arg
         self._thisptr.minimizeMayerTerm(deref(expression._thisptr))
 
+    def minimizeLagrangeTerm(self, arg):
+        cdef Expression expression = arg
+        self._thisptr.minimizeLagrangeTerm(deref(expression._thisptr))
+
     def subjectTo(self, *args):
         cdef DifferentialEquation diffeq
         cdef int index
@@ -414,6 +430,9 @@ cdef class OptimizationAlgorithm:
     def __dealloc__(self):
         if self._owner:
             del self._thisptr
+
+    def set(self, int option_id, int value):
+        self._thisptr.set(<acado.OptionsName> option_id, value)
     
     def solve(self):
         self._thisptr.solve()
