@@ -431,8 +431,22 @@ cdef class OptimizationAlgorithm:
         if self._owner:
             del self._thisptr
 
-    def set(self, int option_id, int value):
-        self._thisptr.set(<acado.OptionsName> option_id, value)
+    def set(self, int option_id, value):
+        values = {
+            HESSIAN_APPROXIMATION:acado.OptionsName.HESSIAN_APPROXIMATION,
+            MAX_NUM_ITERATIONS:acado.OptionsName.MAX_NUM_ITERATIONS,
+            KKT_TOLERANCE:acado.OptionsName.KKT_TOLERANCE,
+        }
+
+        if isinstance(value, int):
+            self._thisptr.set(<acado.OptionsName> values[option_id], <int>value)
+        elif isinstance(value, float):
+            self._thisptr.set(<acado.OptionsName> values[option_id], <double>value)
+        #elif isinstance(value, str):
+        #    # FIXME: sort out the unicode/bytes string questions
+        #    self._thisptr.set(<acado.OptionsName> values[option_id], <str>value)
+
+
     
     def solve(self):
         self._thisptr.solve()
