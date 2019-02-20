@@ -2,11 +2,14 @@ import unittest
 
 from acadopy import (
     Expression, DifferentialState, IntermediateState, TIME, Function,
-    exp, DMatrix, DVector
+    exp, DMatrix, DVector, clear_static_counters
 )
 
 
 class AcadoTestCase(unittest.TestCase):
+
+    def setUp(self):
+        clear_static_counters()
 
     def test_instantiate_expression(self):
 
@@ -23,9 +26,15 @@ class AcadoTestCase(unittest.TestCase):
         e = Expression("name", 3, 1)
         self.assertIsInstance(e, Expression)
 
+    def test_expression_print(self):
+
+        e = Expression("name", 3, 1)
+        print(e)
+
     def test_instantiate_function(self):
 
         f = Function()
+
 
     def test_expression_add(self):
 
@@ -34,10 +43,24 @@ class AcadoTestCase(unittest.TestCase):
         y = x + 0.5
 
         self.assertIsInstance(y, Expression)
+        self.assertEqual(y.dim, 1)
+        self.assertEqual(y.num_rows, 1)
+        self.assertEqual(y.num_cols, 1)
+        self.assertFalse(y.is_variable)
 
         y = 0.5 + x 
 
         self.assertIsInstance(y, Expression)
+
+        z = DifferentialState()
+
+        y = x + z + 1.0
+        print(y)
+        self.assertIsInstance(y, Expression)
+        self.assertEqual(y.dim, 1)
+        self.assertEqual(y.num_rows, 1)
+        self.assertEqual(y.num_cols, 1)
+        self.assertFalse(y.is_variable)
 
     def test_expression_mult(self):
 
@@ -69,11 +92,9 @@ class AcadoTestCase(unittest.TestCase):
         self.assertEqual(f.nx, 0)
 
         f << expression
+
         self.assertEqual(f.dim, 1)
         self.assertEqual(f.nx, 1)
-
-
-
 
     def test_simple_function(self):
         x = DifferentialState()
