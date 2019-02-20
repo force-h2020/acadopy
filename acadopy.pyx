@@ -12,6 +12,11 @@ KKT_TOLERANCE = acado.OptionsName.KKT_TOLERANCE
 
 EXACT_HESSIAN = acado.HessianApproximationMode.EXACT_HESSIAN
 
+
+def clear_static_counters():
+    print('Clearing up all the static counters')
+    acado.clearAllStaticCounters()
+
 cdef class DMatrix:
 
     def __cinit__(self, nrows=0, ncols=0):
@@ -101,6 +106,11 @@ cdef class Expression:
             del self._thisptr
         self._thisptr = NULL
 
+    def __repr__(self):
+        # Fake print statement
+        acado.cout << deref(self._thisptr)
+        return ""
+
     @classmethod
     def factory(cls, value):
         cdef acado.Expression* _expression
@@ -124,6 +134,23 @@ cdef class Expression:
             )
         cdef Expression expression = cls()
         return expression_from_ref(_expression, owner=True)
+
+
+    property dim:
+        def __get__(self):
+            return self._thisptr.getDim()
+
+    property num_rows:
+        def __get__(self):
+            return self._thisptr.getNumRows()
+
+    property num_cols:
+        def __get__(self):
+            return self._thisptr.getNumCols()
+
+    property is_variable:
+        def __get__(self):
+            return self._thisptr.isVariable()
 
     def __add__(self, other):
         cdef acado.Expression*  _result
@@ -237,12 +264,12 @@ cdef class ExpressionType(Expression):
         
 def exp(Expression expression):
     cdef acado.Expression* _expression
-    _expression =  new acado.Expression(expression._thisptr.getExp())
+    _expression =  new acado.Expression(acado.exp(deref(expression._thisptr)))
     return expression_from_ref(_expression, owner=True)
 
 def dot(Expression expression):
     cdef acado.Expression* _expression
-    _expression =  new acado.Expression(expression._thisptr.getDot())
+    _expression =  new acado.Expression(acado.dot(deref(expression._thisptr)))
     return expression_from_ref(_expression, owner=True)
 
 cdef class DifferentialState(ExpressionType):
@@ -313,16 +340,13 @@ cdef class Function:
 
             _function << deref(rhs._thisptr)
 
-            result = Function(initialize=False)
-            result._thisptr = new acado.Function(_function)
-            result._owner = True
+            lhs._thisptr = new acado.Function(_function)
 
             print('--- DEBUG __ Function.__lshift__')
             print(_function.getDim(), _function.getN(), _function.getNX())
-            print(result._thisptr.getDim(), result._thisptr.getN(), result._thisptr.getNX())
             print(lhs._thisptr.getDim(), lhs._thisptr.getN(), lhs._thisptr.getNX())
 
-            return result
+            return self
         else:
             return NotImplemented
 
@@ -401,14 +425,11 @@ cdef class DifferentialEquation(Function):
 
             _diffeq << deref(rhs._thisptr)
 
-            result = DifferentialEquation(initialize=False)
-            result._thisptr = new acado.DifferentialEquation(_diffeq)
-            result._owner = True
+            lhs._thisptr = new acado.DifferentialEquation(_diffeq)
 
             print(_diffeq.getDim(), _diffeq.getN(), _diffeq.getNX())
-            print(result._thisptr.getDim(), result._thisptr.getN(), result._thisptr.getNX())
 
-            return result
+            return self
         else:
             return NotImplemented
 

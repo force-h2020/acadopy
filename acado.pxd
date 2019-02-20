@@ -1,6 +1,7 @@
 from libcpp cimport bool
 from libcpp.string cimport string
 
+
 cdef extern from 'acado/utils/acado_types.hpp' namespace 'ACADO':
     ctypedef bool BooleanType
 
@@ -59,6 +60,10 @@ cdef extern from 'acado/symbolic_expression/expression.hpp' namespace 'ACADO':
         Expression(const Expression&)
         Expression(string&, unsigned int , unsigned int)
 
+        unsigned int getDim()
+        unsigned int getNumRows()
+        unsigned int getNumCols()
+        bool isVariable() 
 
         Expression operator+ (Expression&)
         Expression operator- (Expression&)
@@ -68,9 +73,6 @@ cdef extern from 'acado/symbolic_expression/expression.hpp' namespace 'ACADO':
         ConstraintComponent operator<= (const double&)
         ConstraintComponent operator>= (const double&)
         ConstraintComponent operator== (const double&)
-
-        Expression getExp()
-        Expression getDot()
 
     cdef cppclass ExpressionType[Derived,Type, AllowCounter](Expression):
         ExpressionType()
@@ -93,6 +95,13 @@ cdef extern from 'acado/symbolic_expression/variable_types.hpp' namespace 'ACADO
     cdef cppclass Parameter(ExpressionType):
         Parameter()
 
+    cdef cppclass IntermediateState(ExpressionType):
+        IntermediateState() 
+
+cdef extern from 'acado/symbolic_expression/acado_syntax.hpp':
+    returnValue clearAllStaticCounters()
+    IntermediateState exp(const Expression&)
+    Expression dot(const Expression& )
 
 cdef extern from 'acado/function/function_.hpp' namespace 'ACADO':
     cdef cppclass Function:
@@ -169,3 +178,8 @@ cdef extern from 'acado/optimization_algorithm/optimization_algorithm.hpp' names
         returnValue set(OptionsName, int) except+ # from options.hpp
         returnValue set(OptionsName, double) except+ # from options.hpp
         returnValue set(OptionsName, string) except+ # from options.hpp
+
+cdef extern from "<iostream>" namespace "std":
+    cdef cppclass ostream:
+        ostream& operator<< (Expression&)
+    ostream cout
