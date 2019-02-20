@@ -2,8 +2,6 @@
 from setuptools import setup, Extension
 from Cython.Distutils import build_ext
 
-import eigency
-
 setup(
     name='acadopy',
     version=1.0,
