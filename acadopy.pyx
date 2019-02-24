@@ -1,3 +1,5 @@
+import logging
+
 # FIXME: consider using smartpointers in place of managing the ownership of pointers!
 from cython.operator cimport dereference as deref
 
@@ -13,8 +15,10 @@ KKT_TOLERANCE = acado.OptionsName.KKT_TOLERANCE
 EXACT_HESSIAN = acado.HessianApproximationMode.EXACT_HESSIAN
 
 
+logger = logging.getLogger(__name__)
+
 def clear_static_counters():
-    print('Clearing up all the static counters')
+    logger.debug('Clearing up all the static counters')
     acado.clearAllStaticCounters()
 
 cdef class DMatrix:
@@ -87,6 +91,72 @@ cdef class ConstraintComponent:
 
     def __dealloc__(self):
         del self._thisptr
+
+    def __repr__(self):
+        # Fake print statement
+        acado.cout << deref(self._thisptr).getExpression()
+        return ""
+
+    def __le__(self, other):
+        print("ConstraintComponent.__le__", type(self), type(other))
+        cdef acado.ConstraintComponent* _result
+        cdef ConstraintComponent lhs
+
+        cdef double rhs = other
+        lhs = self
+
+        _result =  new acado.ConstraintComponent(
+            deref(lhs._thisptr) <= rhs
+        )
+
+        cdef ConstraintComponent component = ConstraintComponent(initialize=False)
+        component._thisptr = _result
+        component._owner = True
+
+        return component
+
+    def __eq__(self, other):
+        print("ConstraintComponent.__eq__", type(self), type(other))
+        if not isinstance(self, ConstraintComponent) and not isinstance(other, float):
+            return NotImplemented
+
+        cdef acado.ConstraintComponent* _result
+        cdef ConstraintComponent lhs
+        cdef double rhs
+        cdef ConstraintComponent component
+
+        lhs = self
+        rhs = other
+
+        _result = new acado.ConstraintComponent(
+            deref(lhs._thisptr) == rhs
+        )
+
+        component = ConstraintComponent(initialize=False)
+        component._thisptr = _result
+        component._owner = True
+        result = component
+
+        return result    
+
+    def __ge__(self, other):
+        print("Expression.__ge__", type(self), type(other))
+
+        cdef acado.ConstraintComponent* _result
+        cdef ConstraintComponent lhs
+
+        cdef double rhs = other
+        lhs = self
+
+        _result = new acado.ConstraintComponent(
+            deref(lhs._thisptr) >= rhs
+        )
+
+        cdef ConstraintComponent component = ConstraintComponent(initialize=False)
+        component._thisptr = _result
+        component._owner = True
+
+        return component
 
 
 cdef class Expression:
@@ -207,7 +277,7 @@ cdef class Expression:
         cdef Expression lhs
 
         cdef double rhs = other
-        lhs = as_expression(other)
+        lhs = self
 
         _result =  new acado.ConstraintComponent(
             deref(lhs._thisptr) <= rhs
@@ -228,7 +298,7 @@ cdef class Expression:
         cdef double rhs
         cdef ConstraintComponent component
 
-        lhs = as_expression(other)
+        lhs = self
         rhs = other
 
         _result = new acado.ConstraintComponent(
@@ -243,11 +313,12 @@ cdef class Expression:
         return result    
 
     def __ge__(self, other):
+
         cdef acado.ConstraintComponent* _result
         cdef Expression lhs
 
         cdef double rhs = other
-        lhs = as_expression(other)
+        lhs = self
 
         _result = new acado.ConstraintComponent(
             deref(lhs._thisptr) >= rhs
@@ -327,6 +398,11 @@ cdef class Function:
         if self._owner:
             del self._thisptr
 
+    def __repr__(self):
+        # Fake print statement
+        acado.cout << deref(self._thisptr)
+        return ""
+
     def __lshift__(self, other):
         cdef Expression rhs
         cdef Function lhs
@@ -341,10 +417,6 @@ cdef class Function:
             _function << deref(rhs._thisptr)
 
             lhs._thisptr = new acado.Function(_function)
-
-            print('--- DEBUG __ Function.__lshift__')
-            print(_function.getDim(), _function.getN(), _function.getNX())
-            print(lhs._thisptr.getDim(), lhs._thisptr.getN(), lhs._thisptr.getNX())
 
             return self
         else:
@@ -390,7 +462,6 @@ cdef class DifferentialEquation(Function):
         self._owner = True
     
     def __eq__(self, other):
-        print ('DifferentialEq.__eq__', type(self), type(other))
         if not isinstance(other, Expression):
             return NotImplemented
         
@@ -398,19 +469,17 @@ cdef class DifferentialEquation(Function):
         cdef Expression rhs
         cdef DifferentialEquation lhs
         cdef DifferentialEquation result
+        cdef acado.DifferentialEquation _diffeq
 
         lhs = self
         rhs = other
 
-        _result = deref(<acado.DifferentialEquation*>lhs._thisptr)
+        _diffeq = deref(<acado.DifferentialEquation*>lhs._thisptr) 
+        _result = _diffeq == deref(rhs._thisptr)
 
-        _result == deref(rhs._thisptr)
+        lhs._thisptr = new acado.DifferentialEquation(_result)
 
-        result = DifferentialEquation(initialize=False)
-        result._thisptr = new acado.DifferentialEquation(_result)
-        result._owner = True
-
-        return result    
+        return self    
 
     def __lshift__(self, other):
         cdef Expression rhs
@@ -426,8 +495,6 @@ cdef class DifferentialEquation(Function):
             _diffeq << deref(rhs._thisptr)
 
             lhs._thisptr = new acado.DifferentialEquation(_diffeq)
-
-            print(_diffeq.getDim(), _diffeq.getN(), _diffeq.getNX())
 
             return self
         else:
@@ -484,6 +551,21 @@ cdef class OCP:
             index, constraint = args
             self._thisptr.subjectTo(index, deref(constraint._thisptr))
 
+cdef class VariablesGrid:
+
+    def __cinit__(self):
+        self._thisptr = new acado.VariablesGrid()
+
+    def __dealloc__(self):
+        del self._thisptr    
+
+    def __repr__(self):
+        # Fake print statement
+        acado.cout << deref(self._thisptr)
+        return ""
+
+    def pprint(self, str name=""):
+        self._thisptr.pprint(acado.cout, name, acado.PrintScheme.PS_DEFAULT)
 
 cdef class OptimizationAlgorithm:
 
@@ -522,3 +604,30 @@ cdef class OptimizationAlgorithm:
     
     def solve(self):
         self._thisptr.solve()
+
+    def get_differential_states(self):
+        cdef acado.VariablesGrid _grid = acado.VariablesGrid()
+        self._thisptr.getDifferentialStates(_grid)
+
+        cdef VariablesGrid grid = VariablesGrid()
+        grid._thisptr = new acado.VariablesGrid(_grid)
+
+        return grid
+
+    def get_parameters(self):
+        cdef acado.VariablesGrid _grid = acado.VariablesGrid()
+        self._thisptr.getParameters(_grid)
+
+        cdef VariablesGrid grid = VariablesGrid()
+        grid._thisptr = new acado.VariablesGrid(_grid)
+
+        return grid
+
+    def get_controls(self):
+        cdef acado.VariablesGrid _grid = acado.VariablesGrid()
+        self._thisptr.getControls(_grid)
+
+        cdef VariablesGrid grid = VariablesGrid()
+        grid._thisptr = new acado.VariablesGrid(_grid)
+
+        return grid

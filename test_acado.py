@@ -2,7 +2,8 @@ import unittest
 
 from acadopy import (
     Expression, DifferentialState, IntermediateState, TIME, Function,
-    exp, DMatrix, DVector, clear_static_counters
+    exp, DMatrix, DVector, clear_static_counters, dot, DifferentialEquation,
+    ConstraintComponent
 )
 
 
@@ -80,6 +81,10 @@ class AcadoTestCase(unittest.TestCase):
         z = exp(x)
 
         self.assertIsInstance(z, Expression)
+        self.assertEqual(z.dim, 1)
+        self.assertEqual(z.num_rows, 1)
+        self.assertEqual(z.num_cols, 1)
+        self.assertFalse(z.is_variable)
 
     def test_function_loading_expression(self):
 
@@ -103,6 +108,34 @@ class AcadoTestCase(unittest.TestCase):
         f= Function()
 
         z = 0.5 * x + 1.0
+
+    def test_differentialstate_equal(self):
+
+        f = DifferentialEquation()
+        s = DifferentialState()
+        v = DifferentialState()
+
+        intermediate = f << dot(s)
+
+        self.assertIsInstance(intermediate, DifferentialEquation)
+        self.assertEqual(intermediate.dim, 0)
+        self.assertEqual(intermediate.n, 0)
+        self.assertEqual(intermediate.nx, 0)
+        self.assertEqual(intermediate.nu, 0)
+
+        self.assertIsInstance(f, DifferentialEquation)
+        self.assertEqual(f.dim, 0)
+        self.assertEqual(f.n, 0)
+        self.assertEqual(f.nx, 0)
+        self.assertEqual(f.nu, 0)
+
+        result = f == v
+
+        self.assertIsInstance(result, DifferentialEquation)
+        self.assertEqual(result.dim, 1)
+        self.assertEqual(result.n, 0)
+        self.assertEqual(result.nx, 2)
+        self.assertEqual(result.nu, 0)
 
     def test_dmatrix(self):
         
@@ -133,3 +166,14 @@ class AcadoTestCase(unittest.TestCase):
         self.assertIsInstance(vector, DVector)
 
        
+    def test_constraint_component_le(self):
+
+        v = DifferentialState()
+
+        result = -0.01 <= v
+
+        self.assertIsInstance(result, ConstraintComponent)
+
+        result = result <= 3.0
+
+        self.assertIsInstance(result, ConstraintComponent)

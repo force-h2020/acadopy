@@ -50,6 +50,12 @@ cdef extern from 'acado/symbolic_expression/constraint_component.hpp' namespace 
         ConstraintComponent()
         ConstraintComponent(const ConstraintComponent)
 
+        Expression getExpression()
+
+        ConstraintComponent operator<= (const double&)
+        ConstraintComponent operator>= (const double&)
+        ConstraintComponent operator== (const double&)
+
 cdef extern from 'acado/symbolic_expression/expression.hpp' namespace 'ACADO':
 
     cdef cppclass Expression:
@@ -151,6 +157,12 @@ cdef extern from 'acado/utils/acado_types.hpp' namespace 'ACADO':
         GAUSS_NEWTON_WITH_BLOCK_BFGS
         EXACT_HESSIAN
         DEFAULT_HESSIAN_APPROXIMATION
+    
+    cdef enum PrintScheme:
+        PS_DEFAULT
+        PS_PLAIN
+        PS_MATLAB
+        PS_MATLAB_BINARY
 
 cdef extern from 'acado/ocp/ocp.hpp' namespace 'ACADO':
 
@@ -167,6 +179,19 @@ cdef extern from 'acado/ocp/ocp.hpp' namespace 'ACADO':
         returnValue subjectTo( const DifferentialEquation&)
         returnValue subjectTo( int, const ConstraintComponent&)
 
+cdef extern from "<iostream>" namespace "std":
+    cdef cppclass ostream:
+        ostream& operator<< (Expression&)
+        ostream& operator<< (Function&)
+        ostream& operator<< (VariablesGrid&)
+    ostream cout
+
+cdef extern from 'acado/variables_grid/variables_grid.hpp' namespace 'ACADO':
+    cdef cppclass VariablesGrid:
+        VariablesGrid()
+        VariablesGrid(const VariablesGrid&)
+        returnValue pprint "print"(ostream&, const char*, PrintScheme)
+
 cdef extern from 'acado/optimization_algorithm/optimization_algorithm.hpp' namespace 'ACADO':
 
     cdef cppclass OptimizationAlgorithm:
@@ -179,7 +204,6 @@ cdef extern from 'acado/optimization_algorithm/optimization_algorithm.hpp' names
         returnValue set(OptionsName, double) except+ # from options.hpp
         returnValue set(OptionsName, string) except+ # from options.hpp
 
-cdef extern from "<iostream>" namespace "std":
-    cdef cppclass ostream:
-        ostream& operator<< (Expression&)
-    ostream cout
+        returnValue getDifferentialStates(VariablesGrid&)
+        returnValue getParameters(VariablesGrid&)
+        returnValue getControls(VariablesGrid&)
