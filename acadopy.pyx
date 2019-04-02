@@ -1,3 +1,6 @@
+# (C) Copyright 2019 Enthought, Inc., Austin, TX
+# All rights reserved.
+
 # FIXME: consider using smartpointers in place of managing the ownership of pointers!
 from cython.operator cimport dereference as deref
 
