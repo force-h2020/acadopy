@@ -6,6 +6,7 @@ import eigency
 
 setup(
     name='acadopy',
+    license="BSD",
     version=1.0,
     ext_modules=[
         Extension(
