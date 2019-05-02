@@ -1,3 +1,5 @@
+# (C) Copyright 2019 Enthought, Inc., Austin, TX
+# All rights reserved.
 import logging
 
 # FIXME: consider using smartpointers in place of managing the ownership of pointers!

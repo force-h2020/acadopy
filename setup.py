@@ -4,6 +4,7 @@ from Cython.Distutils import build_ext
 
 setup(
     name='acadopy',
+    license="BSD",
     version=1.0,
     ext_modules=[
         Extension(
