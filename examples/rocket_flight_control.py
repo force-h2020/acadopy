@@ -32,10 +32,9 @@ t_end = 10.0
 ########################################
 
 # An implementation of the model equations for the rocket
-# !! The following should be evaluated a <<, giving a DifferentialEquation, then == which is still a DifferentialEquation
 f << dot(s) == v
-f << dot(v) == ((u - 0.2 * v * v) / m)
-f << dot(m) == (-0.01 * u * u) 
+f << dot(v) == (u - 0.2 * v * v) / m
+f << dot(m) == -0.01 * u * u
 
 ########################################
 # Define an optimal control problem
@@ -70,3 +69,8 @@ algorithm.set(KKT_TOLERANCE, 1e-10 )
 
 algorithm.solve()
 
+states = algorithm.get_differential_states()
+controls = algorithm.get_controls()
+
+print(states)
+print(controls)

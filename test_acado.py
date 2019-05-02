@@ -5,11 +5,15 @@ import unittest
 
 from acadopy import (
     Expression, DifferentialState, IntermediateState, TIME, Function,
-    exp, DMatrix, DVector
+    exp, DMatrix, DVector, clear_static_counters, dot, DifferentialEquation,
+    ConstraintComponent
 )
 
 
 class AcadoTestCase(unittest.TestCase):
+
+    def setUp(self):
+        clear_static_counters()
 
     def test_instantiate_expression(self):
 
@@ -26,9 +30,15 @@ class AcadoTestCase(unittest.TestCase):
         e = Expression("name", 3, 1)
         self.assertIsInstance(e, Expression)
 
+    def test_expression_print(self):
+
+        e = Expression("name", 3, 1)
+        print(e)
+
     def test_instantiate_function(self):
 
         f = Function()
+
 
     def test_expression_add(self):
 
@@ -37,10 +47,24 @@ class AcadoTestCase(unittest.TestCase):
         y = x + 0.5
 
         self.assertIsInstance(y, Expression)
+        self.assertEqual(y.dim, 1)
+        self.assertEqual(y.num_rows, 1)
+        self.assertEqual(y.num_cols, 1)
+        self.assertFalse(y.is_variable)
 
         y = 0.5 + x 
 
         self.assertIsInstance(y, Expression)
+
+        z = DifferentialState()
+
+        y = x + z + 1.0
+        print(y)
+        self.assertIsInstance(y, Expression)
+        self.assertEqual(y.dim, 1)
+        self.assertEqual(y.num_rows, 1)
+        self.assertEqual(y.num_cols, 1)
+        self.assertFalse(y.is_variable)
 
     def test_expression_mult(self):
 
@@ -60,6 +84,10 @@ class AcadoTestCase(unittest.TestCase):
         z = exp(x)
 
         self.assertIsInstance(z, Expression)
+        self.assertEqual(z.dim, 1)
+        self.assertEqual(z.num_rows, 1)
+        self.assertEqual(z.num_cols, 1)
+        self.assertFalse(z.is_variable)
 
     def test_function_loading_expression(self):
 
@@ -68,7 +96,13 @@ class AcadoTestCase(unittest.TestCase):
 
         expression = exp(x + 1)
 
+        self.assertEqual(f.dim, 0)
+        self.assertEqual(f.nx, 0)
+
         f << expression
+
+        self.assertEqual(f.dim, 1)
+        self.assertEqual(f.nx, 1)
 
     def test_simple_function(self):
         x = DifferentialState()
@@ -77,6 +111,34 @@ class AcadoTestCase(unittest.TestCase):
         f= Function()
 
         z = 0.5 * x + 1.0
+
+    def test_differentialstate_equal(self):
+
+        f = DifferentialEquation()
+        s = DifferentialState()
+        v = DifferentialState()
+
+        intermediate = f << dot(s)
+
+        self.assertIsInstance(intermediate, DifferentialEquation)
+        self.assertEqual(intermediate.dim, 0)
+        self.assertEqual(intermediate.n, 0)
+        self.assertEqual(intermediate.nx, 0)
+        self.assertEqual(intermediate.nu, 0)
+
+        self.assertIsInstance(f, DifferentialEquation)
+        self.assertEqual(f.dim, 0)
+        self.assertEqual(f.n, 0)
+        self.assertEqual(f.nx, 0)
+        self.assertEqual(f.nu, 0)
+
+        result = f == v
+
+        self.assertIsInstance(result, DifferentialEquation)
+        self.assertEqual(result.dim, 1)
+        self.assertEqual(result.n, 0)
+        self.assertEqual(result.nx, 2)
+        self.assertEqual(result.nu, 0)
 
     def test_dmatrix(self):
         
@@ -107,3 +169,14 @@ class AcadoTestCase(unittest.TestCase):
         self.assertIsInstance(vector, DVector)
 
        
+    def test_constraint_component_le(self):
+
+        v = DifferentialState()
+
+        result = -0.01 <= v
+
+        self.assertIsInstance(result, ConstraintComponent)
+
+        result = result <= 3.0
+
+        self.assertIsInstance(result, ConstraintComponent)

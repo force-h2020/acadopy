@@ -4,6 +4,7 @@
 from libcpp cimport bool
 from libcpp.string cimport string
 
+
 cdef extern from 'acado/utils/acado_types.hpp' namespace 'ACADO':
     ctypedef bool BooleanType
 
@@ -52,6 +53,12 @@ cdef extern from 'acado/symbolic_expression/constraint_component.hpp' namespace 
         ConstraintComponent()
         ConstraintComponent(const ConstraintComponent)
 
+        Expression getExpression()
+
+        ConstraintComponent operator<= (const double&)
+        ConstraintComponent operator>= (const double&)
+        ConstraintComponent operator== (const double&)
+
 cdef extern from 'acado/symbolic_expression/expression.hpp' namespace 'ACADO':
 
     cdef cppclass Expression:
@@ -62,6 +69,10 @@ cdef extern from 'acado/symbolic_expression/expression.hpp' namespace 'ACADO':
         Expression(const Expression&)
         Expression(string&, unsigned int , unsigned int)
 
+        unsigned int getDim()
+        unsigned int getNumRows()
+        unsigned int getNumCols()
+        bool isVariable() 
 
         Expression operator+ (Expression&)
         Expression operator- (Expression&)
@@ -71,9 +82,6 @@ cdef extern from 'acado/symbolic_expression/expression.hpp' namespace 'ACADO':
         ConstraintComponent operator<= (const double&)
         ConstraintComponent operator>= (const double&)
         ConstraintComponent operator== (const double&)
-
-        Expression getExp()
-        Expression getDot()
 
     cdef cppclass ExpressionType[Derived,Type, AllowCounter](Expression):
         ExpressionType()
@@ -96,19 +104,25 @@ cdef extern from 'acado/symbolic_expression/variable_types.hpp' namespace 'ACADO
     cdef cppclass Parameter(ExpressionType):
         Parameter()
 
+    cdef cppclass IntermediateState(ExpressionType):
+        IntermediateState() 
+
+cdef extern from 'acado/symbolic_expression/acado_syntax.hpp':
+    returnValue clearAllStaticCounters()
+    IntermediateState exp(const Expression&)
+    Expression dot(const Expression& )
 
 cdef extern from 'acado/function/function_.hpp' namespace 'ACADO':
     cdef cppclass Function:
         Function()
+        Function(const Function&)
 
         Function& operator<< (const Expression&)
-
 
         int getDim()
         int getN()
         int getNX()
         int getNU()
-
 
         BooleanType isConvex()
 
@@ -116,11 +130,12 @@ cdef extern from 'acado/function/differential_equation.hpp' namespace 'ACADO':
 
     cdef cppclass DifferentialEquation(Function):
         DifferentialEquation()
+        DifferentialEquation(const DifferentialEquation&)
         DifferentialEquation(const double &tStart, const double &tEnd )
         DifferentialEquation(const double &tStart, const Parameter &tEnd )
 
-        DifferentialEquation& operator<<( const Expression&)
-        DifferentialEquation& operator==( const Expression&)
+        DifferentialEquation& operator==(const Expression&)
+        #DifferentialEquation& operator<<(const Expression&)
 
 cdef extern from 'acado/utils/acado_types.hpp' namespace 'ACADO':
 
@@ -145,6 +160,12 @@ cdef extern from 'acado/utils/acado_types.hpp' namespace 'ACADO':
         GAUSS_NEWTON_WITH_BLOCK_BFGS
         EXACT_HESSIAN
         DEFAULT_HESSIAN_APPROXIMATION
+    
+    cdef enum PrintScheme:
+        PS_DEFAULT
+        PS_PLAIN
+        PS_MATLAB
+        PS_MATLAB_BINARY
 
 cdef extern from 'acado/ocp/ocp.hpp' namespace 'ACADO':
 
@@ -161,6 +182,19 @@ cdef extern from 'acado/ocp/ocp.hpp' namespace 'ACADO':
         returnValue subjectTo( const DifferentialEquation&)
         returnValue subjectTo( int, const ConstraintComponent&)
 
+cdef extern from "<iostream>" namespace "std":
+    cdef cppclass ostream:
+        ostream& operator<< (Expression&)
+        ostream& operator<< (Function&)
+        ostream& operator<< (VariablesGrid&)
+    ostream cout
+
+cdef extern from 'acado/variables_grid/variables_grid.hpp' namespace 'ACADO':
+    cdef cppclass VariablesGrid:
+        VariablesGrid()
+        VariablesGrid(const VariablesGrid&)
+        returnValue pprint "print"(ostream&, const char*, PrintScheme)
+
 cdef extern from 'acado/optimization_algorithm/optimization_algorithm.hpp' namespace 'ACADO':
 
     cdef cppclass OptimizationAlgorithm:
@@ -172,3 +206,7 @@ cdef extern from 'acado/optimization_algorithm/optimization_algorithm.hpp' names
         returnValue set(OptionsName, int) except+ # from options.hpp
         returnValue set(OptionsName, double) except+ # from options.hpp
         returnValue set(OptionsName, string) except+ # from options.hpp
+
+        returnValue getDifferentialStates(VariablesGrid&)
+        returnValue getParameters(VariablesGrid&)
+        returnValue getControls(VariablesGrid&)
