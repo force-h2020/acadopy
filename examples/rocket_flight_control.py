@@ -7,7 +7,7 @@ import sys
 CUR_DIR = os.path.abspath(os.path.dirname(__file__))
 sys.path.append(os.path.join(CUR_DIR, os.pardir))
 
-from acadopy import *
+from acadopy.api import *
 
 ########################################
 # Variables

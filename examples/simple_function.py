@@ -3,19 +3,19 @@
 
 """ Port of examples/getting_started/simple_function.cpp to Python. """
 
-from acadopy import *
+from acadopy.api import *
 
 def simple_example1():
     x = DifferentialState()
     z = IntermediateState()
-    t =TIME() 
+    t =TIME()
     f = Function()
 
     # Expression composition works
     z = 0.5 * x + 1.0
 
-    f << exp(x) + t 
-    f << exp(z+exp(z)) 
+    f << exp(x) + t
+    f << exp(z+exp(z))
 
     # I decided to use properties on the function in place of the old style "get"
     # methods

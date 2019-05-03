@@ -3,10 +3,12 @@
 
 import unittest
 
-from acadopy import (
+from acadopy.api import (
     Expression, DifferentialState, IntermediateState, TIME, Function,
-    exp, DMatrix, DVector, clear_static_counters, dot, DifferentialEquation,
-    ConstraintComponent
+    exp, DMatrix, DVector, DifferentialEquation, dot, Control, OCP,
+    AT_START, AT_END, OptimizationAlgorithm, HESSIAN_APPROXIMATION,
+    EXACT_HESSIAN, MAX_NUM_ITERATIONS, KKT_TOLERANCE, SUCCESSFUL_RETURN,
+    clear_static_counters, ConstraintComponent
 )
 
 
@@ -20,7 +22,6 @@ class AcadoTestCase(unittest.TestCase):
         for cls in [DifferentialState, IntermediateState, TIME]:
             instance = cls()
             self.assertIsInstance(instance, Expression)
-
 
     def test_expression_init(self):
 
@@ -38,6 +39,7 @@ class AcadoTestCase(unittest.TestCase):
     def test_instantiate_function(self):
 
         f = Function()
+        self.assertIsInstance(f, Function)
 
 
     def test_expression_add(self):
@@ -52,19 +54,23 @@ class AcadoTestCase(unittest.TestCase):
         self.assertEqual(y.num_cols, 1)
         self.assertFalse(y.is_variable)
 
-        y = 0.5 + x 
+        y = 0.5 + x
 
         self.assertIsInstance(y, Expression)
 
+    def test_expression_division(self):
+
+        x = DifferentialState()
         z = DifferentialState()
 
-        y = x + z + 1.0
-        print(y)
+        y = (0.5 + x) / 2.0
         self.assertIsInstance(y, Expression)
-        self.assertEqual(y.dim, 1)
-        self.assertEqual(y.num_rows, 1)
-        self.assertEqual(y.num_cols, 1)
-        self.assertFalse(y.is_variable)
+
+        y = (0.5 + x) / (z - 0.2)
+        self.assertIsInstance(y, Expression)
+
+        y = x / z
+        self.assertIsInstance(y, Expression)
 
     def test_expression_mult(self):
 
@@ -74,7 +80,7 @@ class AcadoTestCase(unittest.TestCase):
 
         self.assertIsInstance(y, Expression)
 
-        y = 0.5 * x 
+        y = 0.5 * x
 
         self.assertIsInstance(y, Expression)
 
@@ -107,7 +113,7 @@ class AcadoTestCase(unittest.TestCase):
     def test_simple_function(self):
         x = DifferentialState()
         z = IntermediateState()
-        t =TIME() 
+        t =TIME()
         f= Function()
 
         z = 0.5 * x + 1.0
@@ -141,7 +147,7 @@ class AcadoTestCase(unittest.TestCase):
         self.assertEqual(result.nu, 0)
 
     def test_dmatrix(self):
-        
+
         matrix = DMatrix(3,3)
         self.assertIsInstance(matrix, DMatrix)
 
@@ -158,7 +164,7 @@ class AcadoTestCase(unittest.TestCase):
         self.assertIsInstance(matrix, DMatrix)
 
     def test_dvector(self):
-        
+
         vector = DVector(3)
         self.assertIsInstance(vector, DVector)
 
@@ -168,7 +174,6 @@ class AcadoTestCase(unittest.TestCase):
         vector[0] = 1.2
         self.assertIsInstance(vector, DVector)
 
-       
     def test_constraint_component_le(self):
 
         v = DifferentialState()
@@ -180,3 +185,51 @@ class AcadoTestCase(unittest.TestCase):
         result = result <= 3.0
 
         self.assertIsInstance(result, ConstraintComponent)
+
+    def test_rocket_flight(self):
+        """ Test rocket flight example. """
+        import os
+        import sys
+
+        f = DifferentialEquation()
+        CUR_DIR = os.path.abspath(os.path.dirname(__file__))
+        sys.path.append(os.path.join(CUR_DIR, os.pardir))
+
+        start = 0.0
+        end = 10.0
+
+        s = DifferentialState()
+        v = DifferentialState()
+        m = DifferentialState()
+
+        u = Control()
+        f << dot(s) == v
+        f << dot(v) == ((u - 0.2 * v * v) / m)
+        f << dot(m) == (-0.01 * u * u)
+
+        self.assertIsInstance(f, DifferentialEquation)
+
+        ocp = OCP(start, end, 20)
+        ocp.minimizeLagrangeTerm(u * u)
+        ocp.subjectTo(f)
+
+        ocp.subjectTo(AT_START, s == 0.0)
+        ocp.subjectTo(AT_START, v == 0.0)
+        ocp.subjectTo(AT_START, m == 1.0)
+
+        ocp.subjectTo(AT_END, s == 10.0)
+        ocp.subjectTo(AT_END, v == 0.0)
+
+        ocp.subjectTo(-0.01 <= v <= 1.3)
+        ocp.subjectTo(u * u >= 1.0)
+
+        ########################################
+        # Define an optimization problem and solve the OCP
+        ######################################
+
+        algorithm = OptimizationAlgorithm(ocp)
+        algorithm.set(HESSIAN_APPROXIMATION, EXACT_HESSIAN)
+        algorithm.set(MAX_NUM_ITERATIONS, 20)
+        algorithm.set(KKT_TOLERANCE, 1e-10)
+
+        algorithm.solve()

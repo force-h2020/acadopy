@@ -1,5 +1,6 @@
 # (C) Copyright 2019 Enthought, Inc., Austin, TX
 # All rights reserved.
+# cython: language_level=3
 
 from libcpp cimport bool
 from libcpp.string cimport string
@@ -63,7 +64,7 @@ cdef extern from 'acado/symbolic_expression/expression.hpp' namespace 'ACADO':
 
     cdef cppclass Expression:
         Expression()
-        Expression(const double&) 
+        Expression(const double&)
         Expression(const DMatrix&)
         Expression(const DVector&)
         Expression(const Expression&)
@@ -72,7 +73,7 @@ cdef extern from 'acado/symbolic_expression/expression.hpp' namespace 'ACADO':
         unsigned int getDim()
         unsigned int getNumRows()
         unsigned int getNumCols()
-        bool isVariable() 
+        bool isVariable()
 
         Expression operator+ (Expression&)
         Expression operator- (Expression&)
@@ -83,9 +84,12 @@ cdef extern from 'acado/symbolic_expression/expression.hpp' namespace 'ACADO':
         ConstraintComponent operator>= (const double&)
         ConstraintComponent operator== (const double&)
 
+        Expression getExp()
+        Expression getDot()
+
     cdef cppclass ExpressionType[Derived,Type, AllowCounter](Expression):
         ExpressionType()
-        ExpressionType(const double&) 
+        ExpressionType(const double&)
 
 cdef extern from 'acado/symbolic_expression/variable_types.hpp' namespace 'ACADO':
     cdef cppclass Control(ExpressionType):
@@ -94,7 +98,7 @@ cdef extern from 'acado/symbolic_expression/variable_types.hpp' namespace 'ACADO
     cdef cppclass DifferentialState(ExpressionType):
         DifferentialState()
         DifferentialState(string& , unsigned int, unsigned int)
-    
+
     cdef cppclass IntermediateState(ExpressionType):
         IntermediateState()
 
@@ -105,7 +109,7 @@ cdef extern from 'acado/symbolic_expression/variable_types.hpp' namespace 'ACADO
         Parameter()
 
     cdef cppclass IntermediateState(ExpressionType):
-        IntermediateState() 
+        IntermediateState()
 
 cdef extern from 'acado/symbolic_expression/acado_syntax.hpp':
     returnValue clearAllStaticCounters()
@@ -139,8 +143,14 @@ cdef extern from 'acado/function/differential_equation.hpp' namespace 'ACADO':
 
 cdef extern from 'acado/utils/acado_types.hpp' namespace 'ACADO':
 
+    cdef enum returnValueType:
+        SUCCESSFUL_RETURN
+        RET_OPTALG_INIT_FAILED
+
     cdef cppclass returnValue:
-        pass
+
+        bool operator== (const returnValueType&)
+        bool operator!= (const returnValueType&)
 
     cdef enum TimeHorizonElement:
         AT_TRANSITION
@@ -160,7 +170,7 @@ cdef extern from 'acado/utils/acado_types.hpp' namespace 'ACADO':
         GAUSS_NEWTON_WITH_BLOCK_BFGS
         EXACT_HESSIAN
         DEFAULT_HESSIAN_APPROXIMATION
-    
+
     cdef enum PrintScheme:
         PS_DEFAULT
         PS_PLAIN

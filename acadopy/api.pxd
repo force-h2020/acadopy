@@ -1,8 +1,9 @@
 # (C) Copyright 2019 Enthought, Inc., Austin, TX
 # All rights reserved.
+# cython: language_level=3
 
 from libcpp cimport bool
-cimport acado 
+from . cimport acado
 
 cdef class DMatrix:
     cdef acado.DMatrix* _thisptr
