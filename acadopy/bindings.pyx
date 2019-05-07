@@ -15,7 +15,10 @@ from . cimport acado
 
 SUCCESSFUL_RETURN = acado.returnValueType.SUCCESSFUL_RETURN
 RET_OPTALG_INIT_FAILED = acado.returnValueType.RET_OPTALG_INIT_FAILED
+PARETO_FRONT_GENERATION = acado.OptionsName.PARETO_FRONT_GENERATION
+PARETO_FRONT_DISCRETIZATION = acado.OptionsName.PARETO_FRONT_DISCRETIZATION
 
+PFG_WEIGHTED_SUM = acado.ParetoFrontGeneration.PFG_WEIGHTED_SUM
 
 AT_START = acado.TimeHorizonElement.AT_START
 AT_END = acado.TimeHorizonElement.AT_END
@@ -401,7 +404,7 @@ cdef class Function:
     """ Python wrapper of the Function class
     """
 
-    def __cinit__(self, initialize=True):
+    def __cinit__(self, initialize=True, *args, **kwargs):
         if initialize:
             self._thisptr = new acado.Function()
             self._owner = True
@@ -457,21 +460,35 @@ cdef class Function:
 cdef class DifferentialEquation(Function):
 
     def __cinit__(self, start=None, end=None, initialize=True):
+
         if not initialize:
             self._owner = False
             return
 
-        cdef float dstart
+        cdef Parameter pstart
         cdef Parameter pend
-        cdef acado.Parameter _parameter
-        if start == end == None:
+        cdef acado.Parameter start_parameter
+        cdef acado.Parameter end_parameter
+
+        if start is None and end is None:
             self._thisptr = new acado.DifferentialEquation()
-        else:
-            # FIXME: support other constructors
-            dstart = start
+        elif isinstance(start, Parameter) and isinstance(end, Parameter):
+            pstart = start
             pend = end
-            _parameter = deref(<acado.Parameter*>pend._thisptr)
-            self._thisptr = new acado.DifferentialEquation(<double>start, _parameter)
+            start_parameter = deref(<acado.Parameter*>pstart._thisptr)
+            end_parameter = deref(<acado.Parameter*>pend._thisptr)
+            self._thisptr = new acado.DifferentialEquation(start_parameter, end_parameter)
+        elif not isinstance(start, Parameter) and isinstance(end, Parameter):
+            pend = end
+            end_parameter = deref(<acado.Parameter*>pend._thisptr)
+            self._thisptr = new acado.DifferentialEquation(<double>start, end_parameter)
+        elif isinstance(start, Parameter) and not isinstance(end, Parameter):
+            pstart = start
+            _parameter = deref(<acado.Parameter*>pstart._thisptr)
+            self._thisptr = new acado.DifferentialEquation(end_parameter, <double>end)
+        else:
+            self._thisptr = new acado.DifferentialEquation(<double>start, <double>end)
+
         self._owner = True
 
     def __eq__(self, other):
@@ -578,6 +595,9 @@ cdef class OCP:
             index, constraint = args
             self._thisptr.subjectTo(index, deref(constraint._thisptr))
 
+    def get_number_of_mayer_terms(self):
+        return self._thisptr.getNumberOfMayerTerms()
+
 cdef class VariablesGrid:
 
     def __cinit__(self):
@@ -598,6 +618,7 @@ cdef class OptimizationAlgorithm:
 
     def __cinit__(self, ocp=None):
         cdef OCP _ocp
+        print('calling oa init')
         if ocp:
             _ocp = ocp
             self._thisptr = new acado.OptimizationAlgorithm(
@@ -607,6 +628,7 @@ cdef class OptimizationAlgorithm:
             self._thisptr = new acado.OptimizationAlgorithm()
 
         self._owner = True
+        print('called oa init')
 
     def __dealloc__(self):
         if self._owner:
@@ -628,6 +650,7 @@ cdef class OptimizationAlgorithm:
         #    self._thisptr.set(<acado.OptionsName> values[option_id], <str>value)
 
     def solve(self):
+        logging.debug('calling OA solve')
         _return_value = self._thisptr.solve()
         if _return_value == RET_OPTALG_INIT_FAILED:
             raise RuntimeError('ACADO optimizer failed to initialize.')
@@ -660,3 +683,36 @@ cdef class OptimizationAlgorithm:
         grid._thisptr = new acado.VariablesGrid(_grid)
 
         return grid
+
+cdef class MultiObjectiveAlgorithm(OptimizationAlgorithm):
+
+    def __cinit__(self, ocp=None):
+        print('calling mco init')
+        cdef OCP _ocp
+        if ocp:
+            print('Calling paramd MCO init')
+            _ocp = ocp
+            self._thisptr = new acado.MultiObjectiveAlgorithm(
+                deref(_ocp._thisptr)
+            )
+        else:
+            print('Calling blank MCO init')
+            self._thisptr = new acado.MultiObjectiveAlgorithm()
+
+        self._owner = True
+        print('called mco init')
+
+    def __dealloc__(self):
+        del self._thisptr
+
+    def solve(self):
+        print('calling MCO solve')
+        _return_value = self._thisptr.solve()
+        print('returned')
+        if _return_value == RET_OPTALG_INIT_FAILED:
+            raise RuntimeError('ACADO optimizer failed to initialize.')
+        elif _return_value != SUCCESSFUL_RETURN:
+            raise RuntimeError('ACADO optimizer failed.')
+
+    # def get_all_differential_states(self, filename):
+        # self._thisptr.getAllDifferentialStates(filename)

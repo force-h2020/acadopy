@@ -56,3 +56,6 @@ cdef class VariablesGrid:
 cdef class OptimizationAlgorithm:
     cdef acado.OptimizationAlgorithm* _thisptr
     cdef bool _owner
+
+cdef class MultiObjectiveAlgorithm(OptimizationAlgorithm):
+    pass

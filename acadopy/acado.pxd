@@ -162,6 +162,8 @@ cdef extern from 'acado/utils/acado_types.hpp' namespace 'ACADO':
         HESSIAN_APPROXIMATION
         MAX_NUM_ITERATIONS
         KKT_TOLERANCE
+        PARETO_FRONT_GENERATION
+        PARETO_FRONT_DISCRETIZATION
 
     cdef enum HessianApproximationMode:
         CONSTANT_HESSIAN
@@ -171,6 +173,16 @@ cdef extern from 'acado/utils/acado_types.hpp' namespace 'ACADO':
         GAUSS_NEWTON_WITH_BLOCK_BFGS
         EXACT_HESSIAN
         DEFAULT_HESSIAN_APPROXIMATION
+
+    cdef enum ParetoFrontGeneration:
+        PFG_FIRST_OBJECTIVE
+        PFG_SECOND_OBJECTIVE
+        PFG_WEIGHTED_SUM
+        PFG_NORMALIZED_NORMAL_CONSTRAINT
+        PFG_NORMAL_BOUNDARY_INTERSECTION
+        PFG_ENHANCED_NORMALIZED_NORMAL_CONSTRAINT
+        PFG_EPSILON_CONSTRAINT
+        PFG_UNKNOWN
 
     cdef enum PrintScheme:
         PS_DEFAULT
@@ -190,8 +202,10 @@ cdef extern from 'acado/ocp/ocp.hpp' namespace 'ACADO':
         returnValue minimizeMayerTerm(const Expression&)
         returnValue minimizeLagrangeTerm(const Expression&)
 
-        returnValue subjectTo( const DifferentialEquation&)
-        returnValue subjectTo( int, const ConstraintComponent&)
+        returnValue subjectTo(const DifferentialEquation&)
+        returnValue subjectTo(int, const ConstraintComponent&)
+
+        int getNumberOfMayerTerms()
 
 cdef extern from "<iostream>" namespace "std":
     cdef cppclass ostream:
@@ -221,3 +235,15 @@ cdef extern from 'acado/optimization_algorithm/optimization_algorithm.hpp' names
         returnValue getDifferentialStates(VariablesGrid&)
         returnValue getParameters(VariablesGrid&)
         returnValue getControls(VariablesGrid&)
+
+cdef extern from 'acado/optimization_algorithm/multi_objective_algorithm.hpp' namespace 'ACADO':
+    cdef cppclass MultiObjectiveAlgorithm(OptimizationAlgorithm):
+        MultiObjectiveAlgorithm()
+        MultiObjectiveAlgorithm(const OCP&)
+
+        returnValue solve() except+
+
+        returnValue getWeights(const char*)
+        returnValue getAllDifferentialStates(const char*)
+        returnValue getAllControls(const char*)
+        returnValue getAllParameters(const char*)
