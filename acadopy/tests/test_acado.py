@@ -200,6 +200,26 @@ class AcadoTestCase(unittest.TestCase):
 
         self.assertIsInstance(result, ConstraintComponent)
 
+    def test_ocp_state(self):
+        """ Run the start of the car_ws example and test that the OCP
+        is set up correctly.
+        """
+
+        t1 = Parameter()
+        x1 = DifferentialState()
+        x2 = DifferentialState()
+        u = Control()
+
+        f = DifferentialEquation(0, t1)
+        f << dot(x1) == x2
+        f << dot(x2) == u
+
+        ocp = OCP(0, t1, 50)
+        ocp.minimizeMayerTerm(x2)
+        self.assertEqual(ocp.get_number_of_mayer_terms, 1)
+        ocp.minimizeMayerTerm(x2)
+        self.assertEqual(ocp.get_number_of_mayer_terms, 2)
+
     def test_rocket_flight(self):
         """ Test rocket flight example. """
         import os
