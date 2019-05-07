@@ -8,7 +8,7 @@ from acadopy.api import (
     exp, DMatrix, DVector, DifferentialEquation, dot, Control, OCP,
     AT_START, AT_END, OptimizationAlgorithm, HESSIAN_APPROXIMATION,
     EXACT_HESSIAN, MAX_NUM_ITERATIONS, KKT_TOLERANCE, SUCCESSFUL_RETURN,
-    clear_static_counters, ConstraintComponent
+    clear_static_counters, ConstraintComponent, Parameter
 )
 
 
@@ -40,7 +40,6 @@ class AcadoTestCase(unittest.TestCase):
 
         f = Function()
         self.assertIsInstance(f, Function)
-
 
     def test_expression_add(self):
 
@@ -113,10 +112,15 @@ class AcadoTestCase(unittest.TestCase):
     def test_simple_function(self):
         x = DifferentialState()
         z = IntermediateState()
-        t =TIME()
-        f= Function()
+        t = TIME()
+        f = Function()
 
         z = 0.5 * x + 1.0
+
+    def test_differentialstate_init(self):
+
+        x = DifferentialState('x')
+        x = DifferentialState('y', 0, 1)
 
     def test_differentialstate_equal(self):
 
@@ -145,6 +149,16 @@ class AcadoTestCase(unittest.TestCase):
         self.assertEqual(result.n, 0)
         self.assertEqual(result.nx, 2)
         self.assertEqual(result.nu, 0)
+
+    def test_differentialequation_init(self):
+        start = Parameter()
+        end = Parameter()
+        f = DifferentialEquation()
+        f = DifferentialEquation(0, 10)
+        f = DifferentialEquation(0.0, 10.0)
+        f = DifferentialEquation(start, end)
+        f = DifferentialEquation(start, 10.0)
+        f = DifferentialEquation(0.0, end)
 
     def test_dmatrix(self):
 

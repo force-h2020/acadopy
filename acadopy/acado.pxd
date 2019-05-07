@@ -97,7 +97,7 @@ cdef extern from 'acado/symbolic_expression/variable_types.hpp' namespace 'ACADO
 
     cdef cppclass DifferentialState(ExpressionType):
         DifferentialState()
-        DifferentialState(string& , unsigned int, unsigned int)
+        DifferentialState(string&, unsigned int, unsigned int)
 
     cdef cppclass IntermediateState(ExpressionType):
         IntermediateState()
@@ -137,9 +137,10 @@ cdef extern from 'acado/function/differential_equation.hpp' namespace 'ACADO':
         DifferentialEquation(const DifferentialEquation&)
         DifferentialEquation(const double &tStart, const double &tEnd )
         DifferentialEquation(const double &tStart, const Parameter &tEnd )
+        DifferentialEquation(const Parameter &tStart, const double &tEnd )
+        DifferentialEquation(const Parameter &tStart, const Parameter &tEnd )
 
         DifferentialEquation& operator==(const Expression&)
-        #DifferentialEquation& operator<<(const Expression&)
 
 cdef extern from 'acado/utils/acado_types.hpp' namespace 'ACADO':
 
