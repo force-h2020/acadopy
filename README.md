@@ -1,5 +1,6 @@
 # acadopy
-Python bindings for the acado library
+Python bindings for the [acado.github.io](ACADO library), a toolkit for
+automatic control and dynamic optimization.
 
 
 ## Installation
