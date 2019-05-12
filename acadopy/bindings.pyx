@@ -582,7 +582,7 @@ cdef class OCP:
             self._thisptr.minimizeMayerTerm(multi_objective_index, deref(expression._thisptr))
         elif len(args) == 1:
             expression = args[1]
-        self._thisptr.minimizeMayerTerm(deref(expression._thisptr))
+            self._thisptr.minimizeMayerTerm(deref(expression._thisptr))
         else:
             raise ValueError('Invalid function parameters')
 
@@ -648,7 +648,12 @@ cdef class OptimizationAlgorithm:
             HESSIAN_APPROXIMATION: acado.OptionsName.HESSIAN_APPROXIMATION,
             MAX_NUM_ITERATIONS: acado.OptionsName.MAX_NUM_ITERATIONS,
             KKT_TOLERANCE: acado.OptionsName.KKT_TOLERANCE,
+            PARETO_FRONT_GENERATION: acado.OptionsName.PARETO_FRONT_DISCRETIZATION,
+            PARETO_FRONT_DISCRETIZATION: acado.OptionsName.PARETO_FRONT_DISCRETIZATION
         }
+
+        if option_id not in values:
+            raise KeyError('{} not defined')
 
         if isinstance(value, int):
             self._thisptr.set(<acado.OptionsName> values[option_id], <int>value)
