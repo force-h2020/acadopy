@@ -573,9 +573,18 @@ cdef class OCP:
             del self._thisptr
         self._thisptr = NULL
 
-    def minimizeMayerTerm(self, arg):
-        cdef Expression expression = arg
+    def minimizeMayerTerm(self, *args):
+        cdef Expression expression
+        cdef int multi_objective_index
+        if len(args) == 2:
+            multi_objective_index = args[0]
+            expression = args[1]
+            self._thisptr.minimizeMayerTerm(multi_objective_index, deref(expression._thisptr))
+        elif len(args) == 1:
+            expression = args[1]
         self._thisptr.minimizeMayerTerm(deref(expression._thisptr))
+        else:
+            raise ValueError('Invalid function parameters')
 
     def minimizeLagrangeTerm(self, arg):
         cdef Expression expression = arg

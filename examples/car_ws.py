@@ -16,16 +16,16 @@ x2 = DifferentialState()
 t1 = Parameter()
 u = Control()
 
-f = DifferentialEquation(0, t1)
+f = DifferentialEquation(0.0, t1)
 
 f << dot(x1) == x2
 f << dot(x2) == u
 
 ocp = OCP(0.0, t1, 25)
 
-ocp.minimizeMayerTerm(x2)
+ocp.minimizeMayerTerm(0, x2)
 print('mayer num', ocp.get_number_of_mayer_terms())
-ocp.minimizeMayerTerm(2.0 * t1 / 20.0)
+ocp.minimizeMayerTerm(1, 2.0 * t1 / 20.0)
 print('mayer num', ocp.get_number_of_mayer_terms())
 
 ocp.subjectTo(f)
