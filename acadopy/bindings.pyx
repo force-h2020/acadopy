@@ -42,7 +42,9 @@ cdef class DMatrix:
         self._thisptr = new acado.DMatrix(nrows, ncols)
 
     def __dealloc__(self):
-        del self._thisptr
+        if self._owner and self._thisptr is not NULL:
+            del self._thisptr
+            self._thisptr = NULL
 
     def set_zero(self):
         (self._thisptr).setZero()
@@ -61,7 +63,9 @@ cdef class DVector:
         self._thisptr = new acado.DVector(dim)
 
     def __dealloc(self):
-        del self._thisptr
+        if self._owner and self._thisptr is not NULL:
+            del self._thisptr
+            self._thisptr = NULL
 
     def set_value(self, int i, double value):
         acado.vector_assign(deref(self._thisptr), i, value)
@@ -105,7 +109,9 @@ cdef class ConstraintComponent:
             self._thisptr = new acado.ConstraintComponent()
 
     def __dealloc__(self):
-        del self._thisptr
+        if self._owner and self._thisptr is not NULL:
+            del self._thisptr
+            self._thisptr = NULL
 
     def __repr__(self):
         # Fake print statement
@@ -187,9 +193,9 @@ cdef class Expression:
             self._owner = False
 
     def __dealloc__(self):
-        if self._owner:
+        if self._owner and self._thisptr is not NULL:
             del self._thisptr
-        self._thisptr = NULL
+            self._thisptr = NULL
 
     def __repr__(self):
         # Fake print statement
@@ -412,8 +418,9 @@ cdef class Function:
             self._owner = False
 
     def __dealloc__(self):
-        if self._owner:
+        if self._owner and self._thisptr is not NULL:
             del self._thisptr
+            self._thisptr = NULL
 
     def __repr__(self):
         # Fake print statement
@@ -569,9 +576,9 @@ cdef class OCP:
                         self._thisptr = new acado.OCP(ds, de)
 
     def __dealloc__(self):
-        if self._owner:
+        if self._owner and self._thisptr is not NULL:
             del self._thisptr
-        self._thisptr = NULL
+            self._thisptr = NULL
 
     def minimizeMayerTerm(self, *args):
         cdef Expression expression
@@ -613,7 +620,9 @@ cdef class VariablesGrid:
         self._thisptr = new acado.VariablesGrid()
 
     def __dealloc__(self):
-        del self._thisptr
+        if self._owner and self._thisptr is not NULL:
+            del self._thisptr
+            self._thisptr = NULL
 
     def __repr__(self):
         # Fake print statement
@@ -640,9 +649,9 @@ cdef class OptimizationAlgorithm:
         print('called oa init')
 
     def __dealloc__(self):
-        if self._owner:
+        if self._owner and self._thisptr is not NULL:
             del self._thisptr
-            self._owner = False
+            self._thisptr = NULL
 
     def set(self, int option_id, value):
         values = {
@@ -718,9 +727,9 @@ cdef class MultiObjectiveAlgorithm(OptimizationAlgorithm):
         print('called mco init')
 
     def __dealloc__(self):
-        if self._owner:
+        if self._owner and self._thisptr is not NULL:
             del self._thisptr
-            self._owner = False
+            self._thisptr = NULL
 
     def solve(self):
         print('calling MCO solve')
