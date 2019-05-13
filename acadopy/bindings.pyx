@@ -642,6 +642,7 @@ cdef class OptimizationAlgorithm:
     def __dealloc__(self):
         if self._owner:
             del self._thisptr
+            self._owner = False
 
     def set(self, int option_id, value):
         values = {
@@ -717,7 +718,9 @@ cdef class MultiObjectiveAlgorithm(OptimizationAlgorithm):
         print('called mco init')
 
     def __dealloc__(self):
-        del self._thisptr
+        if self._owner:
+            del self._thisptr
+            self._owner = False
 
     def solve(self):
         print('calling MCO solve')
