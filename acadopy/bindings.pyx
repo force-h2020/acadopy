@@ -119,7 +119,6 @@ cdef class ConstraintComponent:
         return ""
 
     def __le__(self, other):
-        print("ConstraintComponent.__le__", type(self), type(other))
         cdef acado.ConstraintComponent* _result
         cdef ConstraintComponent lhs
 
@@ -137,7 +136,6 @@ cdef class ConstraintComponent:
         return component
 
     def __eq__(self, other):
-        print("ConstraintComponent.__eq__", type(self), type(other))
         if not isinstance(self, ConstraintComponent) and not isinstance(other, float):
             return NotImplemented
 
@@ -161,7 +159,6 @@ cdef class ConstraintComponent:
         return result
 
     def __ge__(self, other):
-        print("Expression.__ge__", type(self), type(other))
 
         cdef acado.ConstraintComponent* _result
         cdef ConstraintComponent lhs
@@ -636,7 +633,6 @@ cdef class OptimizationAlgorithm:
 
     def __cinit__(self, ocp=None):
         cdef OCP _ocp
-        print('calling oa init')
         if ocp:
             _ocp = ocp
             self._thisptr = new acado.OptimizationAlgorithm(
@@ -646,7 +642,6 @@ cdef class OptimizationAlgorithm:
             self._thisptr = new acado.OptimizationAlgorithm()
 
         self._owner = True
-        print('called oa init')
 
     def __dealloc__(self):
         if self._owner and self._thisptr is not NULL:
@@ -681,50 +676,46 @@ cdef class OptimizationAlgorithm:
         elif _return_value != SUCCESSFUL_RETURN:
             raise RuntimeError('ACADO optimizer failed.')
 
-    def get_differential_states(self):
-        cdef acado.VariablesGrid _grid = acado.VariablesGrid()
-        self._thisptr.getDifferentialStates(_grid)
+    # def get_differential_states(self):
+        # cdef acado.VariablesGrid _grid = acado.VariablesGrid()
+        # self._thisptr.getDifferentialStates(_grid)
 
-        cdef VariablesGrid grid = VariablesGrid()
-        grid._thisptr = new acado.VariablesGrid(_grid)
+        # cdef VariablesGrid grid = VariablesGrid()
+        # grid._thisptr = new acado.VariablesGrid(_grid)
 
-        return grid
+        # return grid
 
-    def get_parameters(self):
-        cdef acado.VariablesGrid _grid = acado.VariablesGrid()
-        self._thisptr.getParameters(_grid)
+    # def get_parameters(self):
+        # cdef acado.VariablesGrid _grid = acado.VariablesGrid()
+        # self._thisptr.getParameters(_grid)
 
-        cdef VariablesGrid grid = VariablesGrid()
-        grid._thisptr = new acado.VariablesGrid(_grid)
+        # cdef VariablesGrid grid = VariablesGrid()
+        # grid._thisptr = new acado.VariablesGrid(_grid)
 
-        return grid
+        # return grid
 
-    def get_controls(self):
-        cdef acado.VariablesGrid _grid = acado.VariablesGrid()
-        self._thisptr.getControls(_grid)
+    # def get_controls(self):
+        # cdef acado.VariablesGrid _grid = acado.VariablesGrid()
+        # self._thisptr.getControls(_grid)
 
-        cdef VariablesGrid grid = VariablesGrid()
-        grid._thisptr = new acado.VariablesGrid(_grid)
+        # cdef VariablesGrid grid = VariablesGrid()
+        # grid._thisptr = new acado.VariablesGrid(_grid)
 
-        return grid
+        # return grid
 
 cdef class MultiObjectiveAlgorithm(OptimizationAlgorithm):
 
     def __cinit__(self, ocp=None):
-        print('calling mco init')
         cdef OCP _ocp
         if ocp:
-            print('Calling paramd MCO init')
             _ocp = ocp
             self._thisptr = new acado.MultiObjectiveAlgorithm(
                 deref(_ocp._thisptr)
             )
         else:
-            print('Calling blank MCO init')
             self._thisptr = new acado.MultiObjectiveAlgorithm()
 
         self._owner = True
-        print('called mco init')
 
     def __dealloc__(self):
         if self._owner and self._thisptr is not NULL:
@@ -732,9 +723,7 @@ cdef class MultiObjectiveAlgorithm(OptimizationAlgorithm):
             self._thisptr = NULL
 
     def solve(self):
-        print('calling MCO solve')
         _return_value = self._thisptr.solve()
-        print('returned')
         if _return_value == RET_OPTALG_INIT_FAILED:
             raise RuntimeError('ACADO optimizer failed to initialize.')
         elif _return_value != SUCCESSFUL_RETURN:
