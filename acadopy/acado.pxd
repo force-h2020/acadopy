@@ -200,7 +200,7 @@ cdef extern from 'acado/ocp/ocp.hpp' namespace 'ACADO':
         OCP(const double&, const Parameter&, const int&)
 
         returnValue minimizeMayerTerm(const Expression&)
-        returnValue minimizeMayerTerm(const int &multiObjectiveIdx,  const Expression& arg )
+        returnValue minimizeMayerTerm(const int &multiObjectiveIdx,  const Expression&)
         returnValue minimizeLagrangeTerm(const Expression&)
 
         returnValue subjectTo(const DifferentialEquation&)
