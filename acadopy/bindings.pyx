@@ -585,7 +585,8 @@ cdef class OCP:
             expression = args[1]
             self._thisptr.minimizeMayerTerm(multi_objective_index, deref(expression._thisptr))
         elif len(args) == 1:
-            expression = args[1]
+            logger.warning('This call signature is experimental and made lead to segfaults.')
+            expression = args[0]
             self._thisptr.minimizeMayerTerm(deref(expression._thisptr))
         else:
             raise ValueError('Invalid function parameters')
