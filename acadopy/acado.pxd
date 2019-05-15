@@ -238,11 +238,15 @@ cdef extern from 'acado/optimization_algorithm/optimization_algorithm.hpp' names
         returnValue getControls(VariablesGrid&)
 
 cdef extern from 'acado/optimization_algorithm/multi_objective_algorithm.hpp' namespace 'ACADO':
-    cdef cppclass MultiObjectiveAlgorithm(OptimizationAlgorithm):
+    cdef cppclass MultiObjectiveAlgorithm:
         MultiObjectiveAlgorithm()
         MultiObjectiveAlgorithm(const OCP&)
 
         returnValue solve() except+
+
+        returnValue set(OptionsName, int) except+ # from options.hpp
+        returnValue set(OptionsName, double) except+ # from options.hpp
+        returnValue set(OptionsName, string) except+ # from options.hpp
 
         returnValue getWeights(const char*)
         returnValue getAllDifferentialStates(const char*)

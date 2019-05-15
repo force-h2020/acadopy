@@ -57,5 +57,6 @@ cdef class OptimizationAlgorithm:
     cdef acado.OptimizationAlgorithm* _thisptr
     cdef bool _owner
 
-cdef class MultiObjectiveAlgorithm(OptimizationAlgorithm):
-    pass
+cdef class MultiObjectiveAlgorithm:
+    cdef acado.MultiObjectiveAlgorithm* _thisptr
+    cdef bool _owner

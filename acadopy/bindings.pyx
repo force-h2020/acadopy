@@ -679,49 +679,49 @@ cdef class OptimizationAlgorithm:
             self._thisptr.set(<acado.OptionsName> values[option_id], <int>value)
         elif isinstance(value, float):
             self._thisptr.set(<acado.OptionsName> values[option_id], <double>value)
-        #elif isinstance(value, str):
-        #    # FIXME: sort out the unicode/bytes string questions
-        #    self._thisptr.set(<acado.OptionsName> values[option_id], <str>value)
+        # elif isinstance(value, str):
+           # FIXME: sort out the unicode/bytes string questions
+           # self._thisptr.set(<acado.OptionsName> values[option_id], <char*>value)
 
     def solve(self):
-        logging.debug('calling OA solve')
         _return_value = self._thisptr.solve()
         if _return_value == RET_OPTALG_INIT_FAILED:
             raise RuntimeError('ACADO optimizer failed to initialize.')
         elif _return_value != SUCCESSFUL_RETURN:
             raise RuntimeError('ACADO optimizer failed.')
 
-    # def get_differential_states(self):
-        # cdef acado.VariablesGrid _grid = acado.VariablesGrid()
-        # self._thisptr.getDifferentialStates(_grid)
+    def get_differential_states(self):
+        cdef acado.VariablesGrid _grid = acado.VariablesGrid()
+        self._thisptr.getDifferentialStates(_grid)
 
-        # cdef VariablesGrid grid = VariablesGrid()
-        # grid._thisptr = new acado.VariablesGrid(_grid)
+        cdef VariablesGrid grid = VariablesGrid()
+        grid._thisptr = new acado.VariablesGrid(_grid)
 
-        # return grid
+        return grid
 
-    # def get_parameters(self):
-        # cdef acado.VariablesGrid _grid = acado.VariablesGrid()
-        # self._thisptr.getParameters(_grid)
+    def get_parameters(self):
+        cdef acado.VariablesGrid _grid = acado.VariablesGrid()
+        self._thisptr.getParameters(_grid)
 
-        # cdef VariablesGrid grid = VariablesGrid()
-        # grid._thisptr = new acado.VariablesGrid(_grid)
+        cdef VariablesGrid grid = VariablesGrid()
+        grid._thisptr = new acado.VariablesGrid(_grid)
 
-        # return grid
+        return grid
 
-    # def get_controls(self):
-        # cdef acado.VariablesGrid _grid = acado.VariablesGrid()
-        # self._thisptr.getControls(_grid)
+    def get_controls(self):
+        cdef acado.VariablesGrid _grid = acado.VariablesGrid()
+        self._thisptr.getControls(_grid)
 
-        # cdef VariablesGrid grid = VariablesGrid()
-        # grid._thisptr = new acado.VariablesGrid(_grid)
+        cdef VariablesGrid grid = VariablesGrid()
+        grid._thisptr = new acado.VariablesGrid(_grid)
 
-        # return grid
+        return grid
 
-cdef class MultiObjectiveAlgorithm(OptimizationAlgorithm):
+cdef class MultiObjectiveAlgorithm:
 
     def __cinit__(self, ocp=None):
         cdef OCP _ocp
+
         if ocp:
             _ocp = ocp
             self._thisptr = new acado.MultiObjectiveAlgorithm(
@@ -744,5 +744,26 @@ cdef class MultiObjectiveAlgorithm(OptimizationAlgorithm):
         elif _return_value != SUCCESSFUL_RETURN:
             raise RuntimeError('ACADO optimizer failed.')
 
-    # def get_all_differential_states(self, filename):
-        # self._thisptr.getAllDifferentialStates(filename)
+    def set(self, int option_id, value):
+
+        values = {
+            HESSIAN_APPROXIMATION: acado.OptionsName.HESSIAN_APPROXIMATION,
+            MAX_NUM_ITERATIONS: acado.OptionsName.MAX_NUM_ITERATIONS,
+            KKT_TOLERANCE: acado.OptionsName.KKT_TOLERANCE,
+            PARETO_FRONT_GENERATION: acado.OptionsName.PARETO_FRONT_GENERATION,
+            PARETO_FRONT_DISCRETIZATION: acado.OptionsName.PARETO_FRONT_DISCRETIZATION
+        }
+
+        if option_id not in values:
+            raise KeyError('{} not defined')
+
+        if isinstance(value, int):
+            self._thisptr.set(<acado.OptionsName> option_id, <int>value)
+        elif isinstance(value, float):
+            self._thisptr.set(<acado.OptionsName> option_id, <double>value)
+        # elif isinstance(value, str):
+           # FIXME: sort out the unicode/bytes string questions
+           # self._thisptr.set(<acado.OptionsName> values[option_id], <char*>value)
+
+    def get_all_differential_states(self, filename):
+        self._thisptr.getAllDifferentialStates(filename)
