@@ -43,7 +43,7 @@ ocp.subjectTo(0.0 <= u <= 1.0)
 
 algorithm = MultiObjectiveAlgorithm(ocp)
 
-algorithm.set(PARETO_FRONT_GENERATION, PFG_WEIGHTED_SUM)
+algorithm.set(PARETO_FRONT_GENERATION, PFG_NORMAL_BOUNDARY_INTERSECTION)
 algorithm.set(PARETO_FRONT_DISCRETIZATION, 11)
 algorithm.set(HESSIAN_APPROXIMATION, EXACT_HESSIAN)
 

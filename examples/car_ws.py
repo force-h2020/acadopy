@@ -1,15 +1,15 @@
 # (C) Copyright 2019 Enthought, Inc., Austin, TX
 # All rights reserved.
 
+""" Python implementation of the ACADO example
+`examples/multi_objective/car_ws.cpp`.
+
+"""
+
 import os
 import sys
 
-from acadopy.api import (
-    DifferentialState, Control, Parameter, DifferentialEquation, dot, OCP,
-    AT_START, AT_END, MultiObjectiveAlgorithm, PFG_WEIGHTED_SUM,
-    PARETO_FRONT_GENERATION, PARETO_FRONT_DISCRETIZATION, KKT_TOLERANCE
-)
-
+from acadopy.api import *
 
 x1 = DifferentialState()
 x2 = DifferentialState()
@@ -24,12 +24,8 @@ f << dot(x2) == u
 ocp = OCP(0.0, t1, 25)
 
 ocp.minimizeMayerTerm(0, x2)
-print('mayer num', ocp.get_number_of_mayer_terms())
 ocp.minimizeMayerTerm(1, 2.0 * t1 / 20.0)
-print('mayer num', ocp.get_number_of_mayer_terms())
-
 ocp.subjectTo(f)
-print('mayer num', ocp.get_number_of_mayer_terms())
 
 ocp.subjectTo(AT_START, x1 == 0.0)
 ocp.subjectTo(AT_START, x2 == 0.0)
@@ -45,9 +41,6 @@ algorithm.set(PARETO_FRONT_GENERATION, PFG_WEIGHTED_SUM)
 algorithm.set(PARETO_FRONT_DISCRETIZATION, 11)
 algorithm.set(KKT_TOLERANCE, 1e-8 )
 
-print('solving')
-
 algorithm.solve()
 
-print('solved')
-# algorithm.get_all_differential_states('car_ws_stats.txt')
+algorithm.get_all_differential_states('car_ws_stats.txt')
