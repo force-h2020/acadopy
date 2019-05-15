@@ -654,7 +654,7 @@ cdef class OptimizationAlgorithm:
             HESSIAN_APPROXIMATION: acado.OptionsName.HESSIAN_APPROXIMATION,
             MAX_NUM_ITERATIONS: acado.OptionsName.MAX_NUM_ITERATIONS,
             KKT_TOLERANCE: acado.OptionsName.KKT_TOLERANCE,
-            PARETO_FRONT_GENERATION: acado.OptionsName.PARETO_FRONT_DISCRETIZATION,
+            PARETO_FRONT_GENERATION: acado.OptionsName.PARETO_FRONT_GENERATION,
             PARETO_FRONT_DISCRETIZATION: acado.OptionsName.PARETO_FRONT_DISCRETIZATION
         }
 
