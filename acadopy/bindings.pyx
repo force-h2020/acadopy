@@ -13,22 +13,36 @@ from cython.operator cimport dereference as deref
 
 from . cimport acado
 
+# FIXME: consider moving these global definitions to their own submodule
+# Return codes
 SUCCESSFUL_RETURN = acado.returnValueType.SUCCESSFUL_RETURN
 RET_OPTALG_INIT_FAILED = acado.returnValueType.RET_OPTALG_INIT_FAILED
-PARETO_FRONT_GENERATION = acado.OptionsName.PARETO_FRONT_GENERATION
-PARETO_FRONT_DISCRETIZATION = acado.OptionsName.PARETO_FRONT_DISCRETIZATION
 
-PFG_WEIGHTED_SUM = acado.ParetoFrontGeneration.PFG_WEIGHTED_SUM
-
-AT_START = acado.TimeHorizonElement.AT_START
-AT_END = acado.TimeHorizonElement.AT_END
-
+# General solver options
 HESSIAN_APPROXIMATION = acado.OptionsName.HESSIAN_APPROXIMATION
 MAX_NUM_ITERATIONS = acado.OptionsName.MAX_NUM_ITERATIONS
 KKT_TOLERANCE = acado.OptionsName.KKT_TOLERANCE
 
+# Pareto options
+PARETO_FRONT_GENERATION = acado.OptionsName.PARETO_FRONT_GENERATION
+PARETO_FRONT_DISCRETIZATION = acado.OptionsName.PARETO_FRONT_DISCRETIZATION
+
+# Pareto front generation possible values
+PFG_WEIGHTED_SUM = acado.ParetoFrontGeneration.PFG_WEIGHTED_SUM
+PFG_FIRST_OBJECTIVE = acado.ParetoFrontGeneration.PFG_FIRST_OBJECTIVE
+PFG_SECOND_OBJECTIVE = acado.ParetoFrontGeneration.PFG_SECOND_OBJECTIVE
+PFG_NORMALIZED_NORMAL_CONSTRAINT = acado.ParetoFrontGeneration.PFG_NORMALIZED_NORMAL_CONSTRAINT
+PFG_NORMAL_BOUNDARY_INTERSECTION = acado.ParetoFrontGeneration.PFG_NORMAL_BOUNDARY_INTERSECTION
+PFG_ENHANCED_NORMALIZED_NORMAL_CONSTRAINT = acado.ParetoFrontGeneration.PFG_ENHANCED_NORMALIZED_NORMAL_CONSTRAINT
+PFG_EPSILON_CONSTRAINT = acado.ParetoFrontGeneration.PFG_EPSILON_CONSTRAINT
+PFG_UNKNOWN = acado.ParetoFrontGeneration.PFG_UNKNOWN
+
+# Hessian Approximation possible values
 EXACT_HESSIAN = acado.HessianApproximationMode.EXACT_HESSIAN
 
+# Time Horizon macros
+AT_START = acado.TimeHorizonElement.AT_START
+AT_END = acado.TimeHorizonElement.AT_END
 
 logger = logging.getLogger(__name__)
 
