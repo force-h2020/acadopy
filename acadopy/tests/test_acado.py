@@ -4,13 +4,7 @@
 import faulthandler
 import unittest
 
-from acadopy.api import (
-    Expression, DifferentialState, IntermediateState, TIME, Function,
-    exp, DMatrix, DVector, DifferentialEquation, dot, Control, OCP,
-    AT_START, AT_END, OptimizationAlgorithm, HESSIAN_APPROXIMATION,
-    EXACT_HESSIAN, MAX_NUM_ITERATIONS, KKT_TOLERANCE, SUCCESSFUL_RETURN,
-    clear_static_counters, ConstraintComponent, Parameter
-)
+from acadopy.api import *
 
 faulthandler.enable()
 
@@ -203,7 +197,7 @@ class AcadoTestCase(unittest.TestCase):
 
         self.assertIsInstance(result, ConstraintComponent)
 
-    def test_ocp_state(self):
+    def test_multiobjective_optimisation(self):
         """ Run the start of the car_ws example and test that the OCP
         is set up correctly.
         """
@@ -220,6 +214,24 @@ class AcadoTestCase(unittest.TestCase):
         ocp = OCP(0.0, t1, 50)
         ocp.minimizeMayerTerm(0, x2)
         self.assertEqual(ocp.get_number_of_mayer_terms(), 1)
+        ocp.minimizeMayerTerm(1, 2.0 * t1 / 20.0)
+        self.assertEqual(ocp.get_number_of_mayer_terms(), 2)
+        ocp.subjectTo(f)
+
+        ocp.subjectTo(AT_START, x1 == 0.0)
+        ocp.subjectTo(AT_START, x2 == 0.0)
+        ocp.subjectTo(AT_END, x1 == 200.0)
+
+        ocp.subjectTo(0.0 <= x1 <= 200.001)
+        ocp.subjectTo(0.0 <= x2 <= 40.0)
+        ocp.subjectTo(0.0 <= u <= 5.0)
+        ocp.subjectTo(0.0 <= t1 <= 50.0)
+
+        algorithm = MultiObjectiveAlgorithm(ocp)
+        algorithm.set(PARETO_FRONT_GENERATION, PFG_WEIGHTED_SUM)
+        algorithm.set(PARETO_FRONT_GENERATION, PFG_NORMAL_BOUNDARY_INTERSECTION)
+        algorithm.set(PARETO_FRONT_DISCRETIZATION, 11)
+        algorithm.set(KKT_TOLERANCE, 1e-8)
 
     def test_rocket_flight(self):
         """ Test rocket flight example. """
