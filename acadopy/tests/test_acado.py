@@ -198,6 +198,47 @@ class AcadoTestCase(unittest.TestCase):
         self.assertIsInstance(result, ConstraintComponent)
 
     def test_multiobjective_optimisation(self):
+        """ Use the catalyst_mixing_nbi example as a test case. """
+
+        x1 = DifferentialState()
+        x2 = DifferentialState()
+        x3 = DifferentialState()
+
+        u = Control()
+
+        f = DifferentialEquation(0.0, 1.0)
+
+        f << dot(x1) == u * (10.0 * x2 - x1)
+        f << dot(x2) == u * (x1 - 10.0 * x2) - (1.0 - u)*x2
+        f << dot(x3) == u/10.0
+
+        ocp = OCP(0.0, 1.0, 25)
+
+        ocp.minimizeMayerTerm(0, (x1+x2-1))
+        self.assertEqual(ocp.get_number_of_mayer_terms(), 1)
+        ocp.minimizeMayerTerm(1, x3)
+        self.assertEqual(ocp.get_number_of_mayer_terms(), 2)
+        ocp.subjectTo(f)
+
+        ocp.subjectTo(AT_START, x1 == 1.0)
+        ocp.subjectTo(AT_START, x2 == 0.0)
+        ocp.subjectTo(AT_START, x3 == 0.0)
+
+        ocp.subjectTo(0.0 <= x1 <= 1.0)
+        ocp.subjectTo(0.0 <= x2 <= 1.0)
+        ocp.subjectTo(0.0 <= x3 <= 1.0)
+        ocp.subjectTo(0.0 <= u <= 1.0)
+
+        algorithm = MultiObjectiveAlgorithm(ocp)
+
+        algorithm.set(PARETO_FRONT_GENERATION, PFG_NORMAL_BOUNDARY_INTERSECTION)
+        algorithm.set(PARETO_FRONT_DISCRETIZATION, 11)
+        algorithm.set(HESSIAN_APPROXIMATION, EXACT_HESSIAN)
+
+        # FIXME: this should be added to the test
+        # algorithm.solve();
+
+    def test_multiobjective_optimisation_2(self):
         """ Run the start of the car_ws example and test that the OCP
         is set up correctly.
         """
@@ -233,8 +274,11 @@ class AcadoTestCase(unittest.TestCase):
         algorithm.set(PARETO_FRONT_DISCRETIZATION, 11)
         algorithm.set(KKT_TOLERANCE, 1e-8)
 
+        # FIXME: this should be added to the test
+        # algorithm.solve();
+
     def test_rocket_flight(self):
-        """ Test rocket flight example. """
+        """ Test simple OCP rocket flight example. """
         import os
         import sys
 
