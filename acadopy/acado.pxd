@@ -212,6 +212,7 @@ cdef extern from 'acado/ocp/ocp.hpp' namespace 'ACADO':
         returnValue minimizeLagrangeTerm(const Expression&)
 
         returnValue subjectTo(const DifferentialEquation&)
+        returnValue subjectTo(const ConstraintComponent&)
         returnValue subjectTo(int, const ConstraintComponent&)
 
         int getNumberOfMayerTerms()
