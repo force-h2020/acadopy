@@ -52,6 +52,7 @@ cdef class OCP:
 
 cdef class VariablesGrid:
     cdef acado.VariablesGrid* _thisptr
+    cdef bool _owner
 
 cdef class OptimizationAlgorithm:
     cdef acado.OptimizationAlgorithm* _thisptr

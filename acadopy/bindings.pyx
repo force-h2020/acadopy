@@ -350,6 +350,10 @@ cdef class Expression:
 
         return result
 
+        def __neg__(self):
+
+            # implement this to allow for `-u` to be supported
+
     def __ge__(self, other):
 
         cdef acado.ConstraintComponent* _result
@@ -625,7 +629,7 @@ cdef class OCP:
         cdef int index
         cdef ConstraintComponent constraint
         cdef acado.returnValue return_value
-        
+
         if len(args) == 1:
             if isinstance(args[0], DifferentialEquation):
                 diffeq = args[0]
@@ -653,6 +657,7 @@ cdef class VariablesGrid:
 
     def __cinit__(self):
         self._thisptr = new acado.VariablesGrid()
+        self._owner=True
 
     def __dealloc__(self):
         if self._owner and self._thisptr is not NULL:
@@ -663,6 +668,7 @@ cdef class VariablesGrid:
         # Fake print statement
         acado.cout << deref(self._thisptr)
         return ""
+    
 
     def pprint(self, str name=""):
         self._thisptr.pprint(acado.cout, name, acado.PrintScheme.PS_DEFAULT)
