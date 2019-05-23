@@ -4,18 +4,7 @@
 import faulthandler
 import unittest
 
-<<<<<<< Updated upstream
 from acadopy.api import *
-=======
-from acadopy.api import (
-    Expression, DifferentialState, IntermediateState, TIME, Function,
-    exp, DMatrix, DVector, DifferentialEquation, dot, Control, OCP,
-    AT_START, AT_END, OptimizationAlgorithm, HESSIAN_APPROXIMATION,
-    EXACT_HESSIAN, MAX_NUM_ITERATIONS, KKT_TOLERANCE, SUCCESSFUL_RETURN,
-    clear_static_counters, ConstraintComponent, Parameter, MultiObjectiveAlgorithm,
-    PARETO_FRONT_GENERATION
-)
->>>>>>> Stashed changes
 
 faulthandler.enable()
 
