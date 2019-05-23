@@ -38,6 +38,12 @@ class AcadoTestCase(unittest.TestCase):
         f = Function()
         self.assertIsInstance(f, Function)
 
+    def test_expression_neg(self):
+
+        e = Expression()
+
+        result  = -e
+
     def test_expression_add(self):
 
         x = DifferentialState()
