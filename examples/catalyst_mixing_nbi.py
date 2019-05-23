@@ -4,14 +4,10 @@
 `examples/multi_objective/catalyst_mixing_nbi.cpp`.
 
 """
-
-import os
-import sys
-
-CUR_DIR = os.path.abspath(os.path.dirname(__file__))
-sys.path.append(os.path.join(CUR_DIR, os.pardir))
-
 from acadopy.api import *
+import faulthandler
+
+faulthandler.enable()
 
 
 x1 = DifferentialState()
@@ -22,13 +18,15 @@ u = Control()
 
 f = DifferentialEquation(0.0, 1.0)
 
-f << dot(x1) == u * (10.0 * x2 - x1)
-f << dot(x2) == u * (x1 - 10.0 * x2) - (1.0 - u)*x2
-f << dot(x3) == u/10.0
+f << dot(x1) == (-u * (x1 - 10.0 * x2))
+f << dot(x2) == ( u * (x1 - 10.0 * x2) - (1.0 - u) * x2)
+f << dot(x3) == ( u / 10.0)
+
+print(f)
 
 ocp = OCP(0.0, 1.0, 25)
 
-ocp.minimizeMayerTerm(0, (x1+x2-1))
+ocp.minimizeMayerTerm(0, -(1.0-x1-x2))
 ocp.minimizeMayerTerm(1, x3)
 ocp.subjectTo(f)
 
@@ -47,4 +45,12 @@ algorithm.set(PARETO_FRONT_GENERATION, PFG_NORMAL_BOUNDARY_INTERSECTION)
 algorithm.set(PARETO_FRONT_DISCRETIZATION, 11)
 algorithm.set(HESSIAN_APPROXIMATION, EXACT_HESSIAN)
 
-algorithm.solve();
+# Minimize individual objective function
+algorithm.solve_single_objective(0)
+
+# Minimize individual objective function
+algorithm.solve_single_objective(1)
+
+# Generate Pareto set
+algorithm.solve()
+
