@@ -4,7 +4,18 @@
 import faulthandler
 import unittest
 
+<<<<<<< Updated upstream
 from acadopy.api import *
+=======
+from acadopy.api import (
+    Expression, DifferentialState, IntermediateState, TIME, Function,
+    exp, DMatrix, DVector, DifferentialEquation, dot, Control, OCP,
+    AT_START, AT_END, OptimizationAlgorithm, HESSIAN_APPROXIMATION,
+    EXACT_HESSIAN, MAX_NUM_ITERATIONS, KKT_TOLERANCE, SUCCESSFUL_RETURN,
+    clear_static_counters, ConstraintComponent, Parameter, MultiObjectiveAlgorithm,
+    PARETO_FRONT_GENERATION
+)
+>>>>>>> Stashed changes
 
 faulthandler.enable()
 
@@ -283,8 +294,6 @@ class AcadoTestCase(unittest.TestCase):
         import sys
 
         f = DifferentialEquation()
-        CUR_DIR = os.path.abspath(os.path.dirname(__file__))
-        sys.path.append(os.path.join(CUR_DIR, os.pardir))
 
         start = 0.0
         end = 10.0
@@ -324,3 +333,40 @@ class AcadoTestCase(unittest.TestCase):
         algorithm.set(KKT_TOLERANCE, 1e-10)
 
         algorithm.solve()
+
+
+    def test_set_option_failures(self):
+
+        x1 = DifferentialState()
+        x2 = DifferentialState()
+        t1 = Parameter()
+        u = Control()
+
+        f = DifferentialEquation(0.0, t1)
+
+        f << dot(x1) == x2
+        f << dot(x2) == u
+
+        ocp = OCP(0.0, t1, 25)
+
+        ocp.minimizeMayerTerm(0, x2)
+        ocp.minimizeMayerTerm(1, 2.0 * t1 / 20.0)
+
+        ocp.subjectTo(f)
+
+        ocp.subjectTo(AT_START, x1 == 0.0)
+        ocp.subjectTo(AT_START, x2 == 0.0)
+        ocp.subjectTo(AT_END, x1 == 200.0)
+
+        ocp.subjectTo(0.0 <= x1 <= 200.001)
+        ocp.subjectTo(0.0 <= x2 <= 40.0)
+        ocp.subjectTo(0.0 <= u <= 5.0)
+        ocp.subjectTo(0.0 <= t1 <= 50.0)
+
+        algorithm = MultiObjectiveAlgorithm(ocp)
+        #with self.assertRaises(ValueError):
+        #    algorithm.set(9999, EXACT_HESSIAN)
+        with self.assertRaises(ValueError):
+            algorithm.set(PARETO_FRONT_GENERATION, 1000)
+        with self.assertRaises(ValueError):
+            algorithm.set(KKT_TOLERANCE, 0.3)

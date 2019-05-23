@@ -146,6 +146,14 @@ cdef extern from 'acado/utils/acado_types.hpp' namespace 'ACADO':
 
     cdef enum returnValueType:
         SUCCESSFUL_RETURN
+        RET_DIV_BY_ZERO
+        RET_INDEX_OUT_OF_BOUNDS
+        RET_INVALID_ARGUMENTS
+
+        RET_OPTION_ALREADY_EXISTS
+        RET_OPTION_DOESNT_EXIST
+        RET_OPTIONS_LIST_CORRUPTED
+        RET_INVALID_OPTION
         RET_OPTALG_INIT_FAILED
 
     cdef cppclass returnValue:

@@ -17,6 +17,7 @@ from . cimport acado
 # Return codes
 SUCCESSFUL_RETURN = acado.returnValueType.SUCCESSFUL_RETURN
 RET_OPTALG_INIT_FAILED = acado.returnValueType.RET_OPTALG_INIT_FAILED
+RET_INVALID_ARGUMENTS = acado.returnValueType.RET_INVALID_ARGUMENTS
 
 # General solver options
 HESSIAN_APPROXIMATION = acado.OptionsName.HESSIAN_APPROXIMATION
@@ -48,7 +49,9 @@ logger = logging.getLogger(__name__)
 
 def clear_static_counters():
     logger.debug('Clearing up all the static counters')
-    acado.clearAllStaticCounters()
+    return_value = acado.clearAllStaticCounters()
+    if return_value != SUCCESSFUL_RETURN:
+        raise RuntimeError('Error while clearing up static counters')
 
 cdef class DMatrix:
 
@@ -644,19 +647,7 @@ cdef class VariablesGrid:
     def pprint(self, str name=""):
         self._thisptr.pprint(acado.cout, name, acado.PrintScheme.PS_DEFAULT)
 
-cdef class OptimizationAlgorithm:
-
-    def __cinit__(self, ocp=None):
-        cdef OCP _ocp
-        if ocp:
-            _ocp = ocp
-            self._thisptr = new acado.OptimizationAlgorithm(
-                deref(_ocp._thisptr)
-            )
-        else:
-            self._thisptr = new acado.OptimizationAlgorithm()
-
-        self._owner = True
+cdef class Algorithm:
 
     def __dealloc__(self):
         if self._owner and self._thisptr is not NULL:
@@ -664,6 +655,8 @@ cdef class OptimizationAlgorithm:
             self._thisptr = NULL
 
     def set(self, int option_id, value):
+
+        cdef acado.returnValue return_value
         values = {
             HESSIAN_APPROXIMATION: acado.OptionsName.HESSIAN_APPROXIMATION,
             MAX_NUM_ITERATIONS: acado.OptionsName.MAX_NUM_ITERATIONS,
@@ -672,17 +665,27 @@ cdef class OptimizationAlgorithm:
             PARETO_FRONT_DISCRETIZATION: acado.OptionsName.PARETO_FRONT_DISCRETIZATION
         }
 
-        if option_id not in values:
-            raise KeyError('{} not defined')
+        #if option_id not in values:
+        #    raise KeyError('{} not defined'.format(option_id))
 
         if isinstance(value, int):
-            self._thisptr.set(<acado.OptionsName> values[option_id], <int>value)
+            return_value = self._thisptr.set(<acado.OptionsName> values[option_id], <int>value)
         elif isinstance(value, float):
             self._thisptr.set(<acado.OptionsName> values[option_id], <double>value)
         # elif isinstance(value, str):
            # FIXME: sort out the unicode/bytes string questions
            # self._thisptr.set(<acado.OptionsName> values[option_id], <char*>value)
 
+        if return_value == RET_INVALID_ARGUMENTS:
+            raise ValueError('Invalid argument {}'.format(option_id))
+        if return_value != SUCCESSFUL_RETURN:
+            if return_value == acado.returnValueType.RET_OPTION_ALREADY_EXISTS:
+                raise ValueError('Option already exists')
+            elif  return_value == acado.returnValueType.RET_OPTION_DOESNT_EXIST:
+                raise ValueError('Option does not exist')
+            elif  return_value == acado.returnValueType.RET_INVALID_OPTION:
+                raise ValueError('Invalid option')
+            
     def solve(self):
         _return_value = self._thisptr.solve()
         if _return_value == RET_OPTALG_INIT_FAILED:
@@ -717,18 +720,32 @@ cdef class OptimizationAlgorithm:
 
         return grid
 
-cdef class MultiObjectiveAlgorithm:
+cdef class OptimizationAlgorithm(Algorithm):
+
+    def __cinit__(self, ocp=None):
+        cdef OCP _ocp
+        if ocp:
+            _ocp = ocp
+            self._thisptr = new acado.OptimizationAlgorithm(
+                deref(_ocp._thisptr)
+            )
+        else:
+            self._thisptr = new acado.OptimizationAlgorithm()
+
+        self._owner = True
+
+cdef class MultiObjectiveAlgorithm(Algorithm):
 
     def __cinit__(self, ocp=None):
         cdef OCP _ocp
 
         if ocp:
             _ocp = ocp
-            self._thisptr = new acado.MultiObjectiveAlgorithm(
+            self._thisptr = <acado.OptimizationAlgorithm*> new acado.MultiObjectiveAlgorithm(
                 deref(_ocp._thisptr)
             )
         else:
-            self._thisptr = new acado.MultiObjectiveAlgorithm()
+            self._thisptr = <acado.OptimizationAlgorithm*> new acado.MultiObjectiveAlgorithm()
 
         self._owner = True
 
@@ -737,33 +754,6 @@ cdef class MultiObjectiveAlgorithm:
             del self._thisptr
             self._thisptr = NULL
 
-    def solve(self):
-        _return_value = self._thisptr.solve()
-        if _return_value == RET_OPTALG_INIT_FAILED:
-            raise RuntimeError('ACADO optimizer failed to initialize.')
-        elif _return_value != SUCCESSFUL_RETURN:
-            raise RuntimeError('ACADO optimizer failed.')
-
-    def set(self, int option_id, value):
-
-        values = {
-            HESSIAN_APPROXIMATION: acado.OptionsName.HESSIAN_APPROXIMATION,
-            MAX_NUM_ITERATIONS: acado.OptionsName.MAX_NUM_ITERATIONS,
-            KKT_TOLERANCE: acado.OptionsName.KKT_TOLERANCE,
-            PARETO_FRONT_GENERATION: acado.OptionsName.PARETO_FRONT_GENERATION,
-            PARETO_FRONT_DISCRETIZATION: acado.OptionsName.PARETO_FRONT_DISCRETIZATION
-        }
-
-        if option_id not in values:
-            raise KeyError('{} not defined')
-
-        if isinstance(value, int):
-            self._thisptr.set(<acado.OptionsName> option_id, <int>value)
-        elif isinstance(value, float):
-            self._thisptr.set(<acado.OptionsName> option_id, <double>value)
-        # elif isinstance(value, str):
-           # FIXME: sort out the unicode/bytes string questions
-           # self._thisptr.set(<acado.OptionsName> values[option_id], <char*>value)
-
     def get_all_differential_states(self, filename):
-        self._thisptr.getAllDifferentialStates(filename)
+       cdef acado.MultiObjectiveAlgorithm* mco = <acado.MultiObjectiveAlgorithm*>self._thisptr
+       mco.getAllDifferentialStates(filename)

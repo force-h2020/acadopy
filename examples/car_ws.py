@@ -38,8 +38,8 @@ ocp.subjectTo(0.0 <= t1 <= 50.0)
 
 algorithm = MultiObjectiveAlgorithm(ocp)
 algorithm.set(PARETO_FRONT_GENERATION, PFG_WEIGHTED_SUM)
-algorithm.set(PARETO_FRONT_DISCRETIZATION, 11)
-algorithm.set(KKT_TOLERANCE, 1e-8 )
+algorithm.set(PARETO_FRONT_DISCRETIZATION, 41)
+algorithm.set(KKT_TOLERANCE, 1.0e-8 )
 
 algorithm.solve()
 
