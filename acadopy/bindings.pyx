@@ -806,6 +806,15 @@ cdef class MultiObjectiveAlgorithm(OptimizationAlgorithm):
     def get_all_differential_states(self, filename):
        self._mcoptr.getAllDifferentialStates(filename)
 
+    def get_pareto_front(self):
+        cdef acado.VariablesGrid _grid = acado.VariablesGrid()
+        self._mcoptr.getParetoFront(_grid)
+
+        cdef VariablesGrid grid = VariablesGrid()
+        grid._thisptr = new acado.VariablesGrid(_grid)
+
+        return grid        
+
     def solve_single_objective(self, int number):
         cdef acado.returnValue _return_value
         _return_value = self._mcoptr.solveSingleObjective(number)

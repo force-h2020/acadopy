@@ -255,6 +255,7 @@ cdef extern from 'acado/optimization_algorithm/multi_objective_algorithm.hpp' na
 
         returnValue solveSingleObjective(const int)
 
+        returnValue getParetoFront(VariablesGrid&)
         returnValue getWeights(const char*)
         returnValue getAllDifferentialStates(const char*)
         returnValue getAllControls(const char*)
