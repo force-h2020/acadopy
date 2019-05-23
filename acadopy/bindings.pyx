@@ -623,15 +623,19 @@ cdef class OCP:
         cdef DifferentialEquation diffeq
         cdef int index
         cdef ConstraintComponent constraint
+        cdef acado.returnValue return_value
         if len(args) == 1:
             if isinstance(args[0], DifferentialEquation):
                 diffeq = args[0]
-                self._thisptr.subjectTo(
+                return_value = self._thisptr.subjectTo(
                     deref(<acado.DifferentialEquation*>diffeq._thisptr)
                 )
         elif len(args) == 2:
             index, constraint = args
-            self._thisptr.subjectTo(index, deref(constraint._thisptr))
+            return_value = self._thisptr.subjectTo(index, deref(constraint._thisptr))
+
+        if return_value != SUCCESSFUL_RETURN:
+            raise ValueError('Error while calling subjectTo {}'.format(args))
 
     def get_number_of_mayer_terms(self):
         return self._thisptr.getNumberOfMayerTerms()
