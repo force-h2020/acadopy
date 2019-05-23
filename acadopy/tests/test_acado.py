@@ -193,9 +193,18 @@ class AcadoTestCase(unittest.TestCase):
 
         self.assertIsInstance(result, ConstraintComponent)
 
-        result = result <= 3.0
+        constraint = result <= 3.0
 
-        self.assertIsInstance(result, ConstraintComponent)
+        self.assertIsInstance(constraint, ConstraintComponent)
+
+    def test_three_item_constraint(self):
+
+        t1 = Parameter()
+
+        constraint = 0.1 <= t1 <= 50.0
+
+        self.assertIsInstance(constraint, ConstraintComponent)
+
 
     def test_multiobjective_optimisation(self):
         """ Use the catalyst_mixing_nbi example as a test case. """
@@ -224,7 +233,8 @@ class AcadoTestCase(unittest.TestCase):
         ocp.subjectTo(AT_START, x2 == 0.0)
         ocp.subjectTo(AT_START, x3 == 0.0)
 
-        ocp.subjectTo(0.0 <= x1 <= 1.0)
+        res = 0.0 <= x1 <= 1.0
+        ocp.subjectTo(res)
         ocp.subjectTo(0.0 <= x2 <= 1.0)
         ocp.subjectTo(0.0 <= x3 <= 1.0)
         ocp.subjectTo(0.0 <= u <= 1.0)
@@ -310,7 +320,7 @@ class AcadoTestCase(unittest.TestCase):
         ocp.subjectTo(AT_END, v == 0.0)
 
         ocp.subjectTo(-0.01 <= v <= 1.3)
-        ocp.subjectTo(u * u >= 1.0)
+        ocp.subjectTo(u * u >= -1.0)
 
         ########################################
         # Define an optimization problem and solve the OCP
