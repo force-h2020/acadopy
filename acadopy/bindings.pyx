@@ -620,16 +620,25 @@ cdef class OCP:
         self._thisptr.minimizeLagrangeTerm(deref(expression._thisptr))
 
     def subjectTo(self, *args):
+
         cdef DifferentialEquation diffeq
         cdef int index
         cdef ConstraintComponent constraint
         cdef acado.returnValue return_value
+        
         if len(args) == 1:
             if isinstance(args[0], DifferentialEquation):
                 diffeq = args[0]
                 return_value = self._thisptr.subjectTo(
                     deref(<acado.DifferentialEquation*>diffeq._thisptr)
                 )
+            elif isinstance(args[0], ConstraintComponent):
+                constraint = args[0]
+                return_value = self._thisptr.subjectTo(
+                    deref(constraint._thisptr)
+                )
+            else:
+                raise ValueError('Unsupported input type for OCP.subjectTo()')
         elif len(args) == 2:
             index, constraint = args
             return_value = self._thisptr.subjectTo(index, deref(constraint._thisptr))
