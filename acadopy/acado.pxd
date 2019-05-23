@@ -76,6 +76,7 @@ cdef extern from 'acado/symbolic_expression/expression.hpp' namespace 'ACADO':
         bool isVariable()
 
         Expression operator+ (Expression&)
+        Expression operator- ()
         Expression operator- (Expression&)
         Expression operator/ (Expression&)
         Expression operator* (Expression&)
@@ -252,7 +253,7 @@ cdef extern from 'acado/optimization_algorithm/multi_objective_algorithm.hpp' na
         MultiObjectiveAlgorithm()
         MultiObjectiveAlgorithm(const OCP&)
 
-        returnValue solve() except+
+        returnValue solveSingleObjective(const int)
 
         returnValue getWeights(const char*)
         returnValue getAllDifferentialStates(const char*)

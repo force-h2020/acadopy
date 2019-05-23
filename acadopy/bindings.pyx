@@ -350,9 +350,24 @@ cdef class Expression:
 
         return result
 
-        def __neg__(self):
+    def __neg__(self):
 
-            # implement this to allow for `-u` to be supported
+        cdef acado.Expression* _result
+        cdef Expression lhs
+        cdef Expression component
+
+        lhs = self
+
+        _result = new acado.Expression(
+            - deref(lhs._thisptr)
+        )
+
+        component = Expression(initialize=False)
+        component._thisptr = _result
+        component._owner = True
+        result = component
+
+        return result
 
     def __ge__(self, other):
 
@@ -790,3 +805,10 @@ cdef class MultiObjectiveAlgorithm(OptimizationAlgorithm):
 
     def get_all_differential_states(self, filename):
        self._mcoptr.getAllDifferentialStates(filename)
+
+    def solve_single_objective(self, int number):
+        cdef acado.returnValue _return_value
+        _return_value = self._mcoptr.solveSingleObjective(number)
+
+        if _return_value != SUCCESSFUL_RETURN:
+            raise RuntimeError('Solve single objective failed.')
