@@ -54,3 +54,6 @@ algorithm.solve_single_objective(1)
 # Generate Pareto set
 algorithm.solve()
 
+pareto_front = algorithm.get_pareto_front()
+print('Pareto front')
+print(pareto_front)
