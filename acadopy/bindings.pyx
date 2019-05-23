@@ -197,14 +197,15 @@ cdef class ConstraintComponent:
 cdef class Expression:
 
     def __cinit__(self, str name=None, int nrows=0, int ncols=0, initialize=True):
-        if initialize:
-            if name is not None:
-                self._thisptr = new acado.Expression(
-                    name, <unsigned int>nrows, <unsigned int>ncols)
+        if type(self) is Expression:
+            if initialize:
+                if name is not None:
+                    self._thisptr = new acado.Expression(
+                        name, <unsigned int>nrows, <unsigned int>ncols)
+                else:
+                    self._thisptr = new acado.Expression()
             else:
-                self._thisptr = new acado.Expression()
-        else:
-            self._owner = False
+                self._owner = False
 
     def __dealloc__(self):
         if self._owner and self._thisptr is not NULL:
@@ -385,21 +386,23 @@ cdef class DifferentialState(ExpressionType):
     """
 
     def __cinit__(self, str name=None, int nrows=0, int ncols=0, initialize=True):
-        if initialize:
-            if name is None:
-                self._thisptr = new acado.DifferentialState()
-            else:
-                self._thisptr = new acado.DifferentialState(
-                    name, <unsigned int>nrows, <unsigned int>ncols
-                )
+        if type(self) is DifferentialState:
+            if initialize:
+                if name is None:
+                    self._thisptr = new acado.DifferentialState()
+                else:
+                    self._thisptr = new acado.DifferentialState(
+                        name, <unsigned int>nrows, <unsigned int>ncols
+                    )
 
 cdef class IntermediateState(ExpressionType):
     """ Python wrapper of the IntermediateState class
     """
 
     def __cinit__(self, initialize=True):
-        if initialize:
-            self._thisptr = new acado.IntermediateState()
+        if type(self) is IntermediateState:
+            if initialize:
+                self._thisptr = new acado.IntermediateState()
 
 
 cdef class TIME(ExpressionType):
@@ -407,29 +410,33 @@ cdef class TIME(ExpressionType):
     """
 
     def __cinit__(self, initialize=True):
-        if initialize:
-            self._thisptr = new acado.TIME()
+        if type(self) == TIME:
+            if initialize:
+                self._thisptr = new acado.TIME()
 
 cdef class Control(ExpressionType):
     def __cinit__(self, initialize=True):
-        if initialize:
-            self._thisptr = new acado.Control()
+        if type(self) == Control:
+            if initialize:
+                self._thisptr = new acado.Control()
 
 cdef class Parameter(ExpressionType):
     def __cinit__(self, initialize=True):
-        if initialize:
-            self._thisptr = new acado.Parameter()
+        if type(self) == Parameter:
+            if initialize:
+                self._thisptr = new acado.Parameter()
 
 cdef class Function:
     """ Python wrapper of the Function class
     """
 
     def __cinit__(self, initialize=True, *args, **kwargs):
-        if initialize:
-            self._thisptr = new acado.Function()
-            self._owner = True
-        else:
-            self._owner = False
+        if type(self) is Function:
+            if initialize:
+                self._thisptr = new acado.Function()
+                self._owner = True
+            else:
+                self._owner = False
 
     def __dealloc__(self):
         if self._owner and self._thisptr is not NULL:
@@ -481,36 +488,36 @@ cdef class Function:
 cdef class DifferentialEquation(Function):
 
     def __cinit__(self, start=None, end=None, initialize=True):
-
-        if not initialize:
-            self._owner = False
-            return
-
         cdef Parameter pstart
         cdef Parameter pend
         cdef acado.Parameter start_parameter
         cdef acado.Parameter end_parameter
 
-        if start is None and end is None:
-            self._thisptr = new acado.DifferentialEquation()
-        elif isinstance(start, Parameter) and isinstance(end, Parameter):
-            pstart = start
-            pend = end
-            start_parameter = deref(<acado.Parameter*>pstart._thisptr)
-            end_parameter = deref(<acado.Parameter*>pend._thisptr)
-            self._thisptr = new acado.DifferentialEquation(start_parameter, end_parameter)
-        elif not isinstance(start, Parameter) and isinstance(end, Parameter):
-            pend = end
-            end_parameter = deref(<acado.Parameter*>pend._thisptr)
-            self._thisptr = new acado.DifferentialEquation(<double>start, end_parameter)
-        elif isinstance(start, Parameter) and not isinstance(end, Parameter):
-            pstart = start
-            _parameter = deref(<acado.Parameter*>pstart._thisptr)
-            self._thisptr = new acado.DifferentialEquation(end_parameter, <double>end)
-        else:
-            self._thisptr = new acado.DifferentialEquation(<double>start, <double>end)
+        if type(self) is DifferentialEquation:
+            if not initialize:
+                self._owner = False
+                return
 
-        self._owner = True
+            if start is None and end is None:
+                self._thisptr = new acado.DifferentialEquation()
+            elif isinstance(start, Parameter) and isinstance(end, Parameter):
+                pstart = start
+                pend = end
+                start_parameter = deref(<acado.Parameter*>pstart._thisptr)
+                end_parameter = deref(<acado.Parameter*>pend._thisptr)
+                self._thisptr = new acado.DifferentialEquation(start_parameter, end_parameter)
+            elif not isinstance(start, Parameter) and isinstance(end, Parameter):
+                pend = end
+                end_parameter = deref(<acado.Parameter*>pend._thisptr)
+                self._thisptr = new acado.DifferentialEquation(<double>start, end_parameter)
+            elif isinstance(start, Parameter) and not isinstance(end, Parameter):
+                pstart = start
+                _parameter = deref(<acado.Parameter*>pstart._thisptr)
+                self._thisptr = new acado.DifferentialEquation(end_parameter, <double>end)
+            else:
+                self._thisptr = new acado.DifferentialEquation(<double>start, <double>end)
+
+            self._owner = True
 
     def __eq__(self, other):
         if not isinstance(other, Expression):
@@ -647,12 +654,27 @@ cdef class VariablesGrid:
     def pprint(self, str name=""):
         self._thisptr.pprint(acado.cout, name, acado.PrintScheme.PS_DEFAULT)
 
-cdef class Algorithm:
+cdef class OptimizationAlgorithm:
+
+    def __cinit__(self, ocp=None):
+        cdef OCP _ocp
+
+        if type(self) is OptimizationAlgorithm: 
+            if ocp:
+                _ocp = ocp
+                self._thisptr = new acado.OptimizationAlgorithm(
+                    deref(_ocp._thisptr)
+                )
+            else:
+                self._thisptr = new acado.OptimizationAlgorithm()
+
+            self._owner = True
 
     def __dealloc__(self):
-        if self._owner and self._thisptr is not NULL:
-            del self._thisptr
-            self._thisptr = NULL
+        if type(self) is OptimizationAlgorithm:
+            if self._owner and self._thisptr is not NULL:
+                del self._thisptr
+                self._thisptr = NULL
 
     def set(self, int option_id, value):
 
@@ -665,8 +687,8 @@ cdef class Algorithm:
             PARETO_FRONT_DISCRETIZATION: acado.OptionsName.PARETO_FRONT_DISCRETIZATION
         }
 
-        #if option_id not in values:
-        #    raise KeyError('{} not defined'.format(option_id))
+        if option_id not in values:
+            raise KeyError('{} not defined'.format(option_id))
 
         if isinstance(value, int):
             return_value = self._thisptr.set(<acado.OptionsName> values[option_id], <int>value)
@@ -676,6 +698,8 @@ cdef class Algorithm:
            # FIXME: sort out the unicode/bytes string questions
            # self._thisptr.set(<acado.OptionsName> values[option_id], <char*>value)
 
+        # TODO: consolidate error management. The C++ object does not allow us to access
+        # the integer value of the returnValue object, which makes the code below ugly.
         if return_value == RET_INVALID_ARGUMENTS:
             raise ValueError('Invalid argument {}'.format(option_id))
         if return_value != SUCCESSFUL_RETURN:
@@ -720,40 +744,30 @@ cdef class Algorithm:
 
         return grid
 
-cdef class OptimizationAlgorithm(Algorithm):
-
-    def __cinit__(self, ocp=None):
-        cdef OCP _ocp
-        if ocp:
-            _ocp = ocp
-            self._thisptr = new acado.OptimizationAlgorithm(
-                deref(_ocp._thisptr)
-            )
-        else:
-            self._thisptr = new acado.OptimizationAlgorithm()
-
-        self._owner = True
-
-cdef class MultiObjectiveAlgorithm(Algorithm):
+cdef class MultiObjectiveAlgorithm(OptimizationAlgorithm):
 
     def __cinit__(self, ocp=None):
         cdef OCP _ocp
 
-        if ocp:
-            _ocp = ocp
-            self._thisptr = <acado.OptimizationAlgorithm*> new acado.MultiObjectiveAlgorithm(
-                deref(_ocp._thisptr)
-            )
-        else:
-            self._thisptr = <acado.OptimizationAlgorithm*> new acado.MultiObjectiveAlgorithm()
+        if type(self) is MultiObjectiveAlgorithm:
+            if ocp:
+                _ocp = ocp
+                self._mcoptr = new acado.MultiObjectiveAlgorithm(
+                    deref(_ocp._thisptr)
+                )
+            else:
+                self._mcoptr = new acado.MultiObjectiveAlgorithm()
 
-        self._owner = True
+            self._thisptr = <acado.OptimizationAlgorithm*>self._mcoptr
+
+            self._owner = True
 
     def __dealloc__(self):
-        if self._owner and self._thisptr is not NULL:
-            del self._thisptr
-            self._thisptr = NULL
+        if type(self) is MultiObjectiveAlgorithm:
+            if self._owner and self._mcoptr is not NULL:
+                del self._mcoptr
+                self._mcoptr = NULL
+                self._thisptr = NULL
 
     def get_all_differential_states(self, filename):
-       cdef acado.MultiObjectiveAlgorithm* mco = <acado.MultiObjectiveAlgorithm*>self._thisptr
-       mco.getAllDifferentialStates(filename)
+       self._mcoptr.getAllDifferentialStates(filename)
