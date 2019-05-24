@@ -76,6 +76,7 @@ cdef extern from 'acado/symbolic_expression/expression.hpp' namespace 'ACADO':
         bool isVariable()
 
         Expression operator+ (Expression&)
+        Expression operator- ()
         Expression operator- (Expression&)
         Expression operator/ (Expression&)
         Expression operator* (Expression&)
@@ -97,7 +98,7 @@ cdef extern from 'acado/symbolic_expression/variable_types.hpp' namespace 'ACADO
 
     cdef cppclass DifferentialState(ExpressionType):
         DifferentialState()
-        DifferentialState(string& , unsigned int, unsigned int)
+        DifferentialState(string&, unsigned int, unsigned int)
 
     cdef cppclass IntermediateState(ExpressionType):
         IntermediateState()
@@ -137,14 +138,24 @@ cdef extern from 'acado/function/differential_equation.hpp' namespace 'ACADO':
         DifferentialEquation(const DifferentialEquation&)
         DifferentialEquation(const double &tStart, const double &tEnd )
         DifferentialEquation(const double &tStart, const Parameter &tEnd )
+        DifferentialEquation(const Parameter &tStart, const double &tEnd )
+        DifferentialEquation(const Parameter &tStart, const Parameter &tEnd )
 
         DifferentialEquation& operator==(const Expression&)
-        #DifferentialEquation& operator<<(const Expression&)
 
 cdef extern from 'acado/utils/acado_types.hpp' namespace 'ACADO':
 
     cdef enum returnValueType:
         SUCCESSFUL_RETURN
+        RET_DIV_BY_ZERO
+        RET_INDEX_OUT_OF_BOUNDS
+        RET_INVALID_ARGUMENTS
+
+        RET_OPTION_ALREADY_EXISTS
+        RET_OPTION_DOESNT_EXIST
+        RET_OPTIONS_LIST_CORRUPTED
+        RET_INVALID_OPTION
+
         RET_OPTALG_INIT_FAILED
 
     cdef cppclass returnValue:
@@ -161,6 +172,8 @@ cdef extern from 'acado/utils/acado_types.hpp' namespace 'ACADO':
         HESSIAN_APPROXIMATION
         MAX_NUM_ITERATIONS
         KKT_TOLERANCE
+        PARETO_FRONT_GENERATION
+        PARETO_FRONT_DISCRETIZATION
 
     cdef enum HessianApproximationMode:
         CONSTANT_HESSIAN
@@ -170,6 +183,16 @@ cdef extern from 'acado/utils/acado_types.hpp' namespace 'ACADO':
         GAUSS_NEWTON_WITH_BLOCK_BFGS
         EXACT_HESSIAN
         DEFAULT_HESSIAN_APPROXIMATION
+
+    cdef enum ParetoFrontGeneration:
+        PFG_FIRST_OBJECTIVE
+        PFG_SECOND_OBJECTIVE
+        PFG_WEIGHTED_SUM
+        PFG_NORMALIZED_NORMAL_CONSTRAINT
+        PFG_NORMAL_BOUNDARY_INTERSECTION
+        PFG_ENHANCED_NORMALIZED_NORMAL_CONSTRAINT
+        PFG_EPSILON_CONSTRAINT
+        PFG_UNKNOWN
 
     cdef enum PrintScheme:
         PS_DEFAULT
@@ -187,10 +210,14 @@ cdef extern from 'acado/ocp/ocp.hpp' namespace 'ACADO':
         OCP(const double&, const Parameter&, const int&)
 
         returnValue minimizeMayerTerm(const Expression&)
+        returnValue minimizeMayerTerm(const int &multiObjectiveIdx,  const Expression& arg )
         returnValue minimizeLagrangeTerm(const Expression&)
 
-        returnValue subjectTo( const DifferentialEquation&)
-        returnValue subjectTo( int, const ConstraintComponent&)
+        returnValue subjectTo(const DifferentialEquation&)
+        returnValue subjectTo(const ConstraintComponent&)
+        returnValue subjectTo(int, const ConstraintComponent&)
+
+        int getNumberOfMayerTerms()
 
 cdef extern from "<iostream>" namespace "std":
     cdef cppclass ostream:
@@ -220,3 +247,16 @@ cdef extern from 'acado/optimization_algorithm/optimization_algorithm.hpp' names
         returnValue getDifferentialStates(VariablesGrid&)
         returnValue getParameters(VariablesGrid&)
         returnValue getControls(VariablesGrid&)
+
+cdef extern from 'acado/optimization_algorithm/multi_objective_algorithm.hpp' namespace 'ACADO':
+    cdef cppclass MultiObjectiveAlgorithm(OptimizationAlgorithm):
+        MultiObjectiveAlgorithm()
+        MultiObjectiveAlgorithm(const OCP&)
+
+        returnValue solveSingleObjective(const int)
+
+        returnValue getParetoFront(VariablesGrid&)
+        returnValue getWeights(const char*)
+        returnValue getAllDifferentialStates(const char*)
+        returnValue getAllControls(const char*)
+        returnValue getAllParameters(const char*)

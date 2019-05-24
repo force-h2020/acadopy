@@ -13,25 +13,45 @@ from cython.operator cimport dereference as deref
 
 from . cimport acado
 
+# FIXME: consider moving these global definitions to their own submodule
+# Return codes
 SUCCESSFUL_RETURN = acado.returnValueType.SUCCESSFUL_RETURN
 RET_OPTALG_INIT_FAILED = acado.returnValueType.RET_OPTALG_INIT_FAILED
+RET_INVALID_ARGUMENTS = acado.returnValueType.RET_INVALID_ARGUMENTS
 
-
-AT_START = acado.TimeHorizonElement.AT_START
-AT_END = acado.TimeHorizonElement.AT_END
-
+# General solver options
 HESSIAN_APPROXIMATION = acado.OptionsName.HESSIAN_APPROXIMATION
 MAX_NUM_ITERATIONS = acado.OptionsName.MAX_NUM_ITERATIONS
 KKT_TOLERANCE = acado.OptionsName.KKT_TOLERANCE
 
+# Pareto options
+PARETO_FRONT_GENERATION = acado.OptionsName.PARETO_FRONT_GENERATION
+PARETO_FRONT_DISCRETIZATION = acado.OptionsName.PARETO_FRONT_DISCRETIZATION
+
+# Pareto front generation possible values
+PFG_WEIGHTED_SUM = acado.ParetoFrontGeneration.PFG_WEIGHTED_SUM
+PFG_FIRST_OBJECTIVE = acado.ParetoFrontGeneration.PFG_FIRST_OBJECTIVE
+PFG_SECOND_OBJECTIVE = acado.ParetoFrontGeneration.PFG_SECOND_OBJECTIVE
+PFG_NORMALIZED_NORMAL_CONSTRAINT = acado.ParetoFrontGeneration.PFG_NORMALIZED_NORMAL_CONSTRAINT
+PFG_NORMAL_BOUNDARY_INTERSECTION = acado.ParetoFrontGeneration.PFG_NORMAL_BOUNDARY_INTERSECTION
+PFG_ENHANCED_NORMALIZED_NORMAL_CONSTRAINT = acado.ParetoFrontGeneration.PFG_ENHANCED_NORMALIZED_NORMAL_CONSTRAINT
+PFG_EPSILON_CONSTRAINT = acado.ParetoFrontGeneration.PFG_EPSILON_CONSTRAINT
+PFG_UNKNOWN = acado.ParetoFrontGeneration.PFG_UNKNOWN
+
+# Hessian Approximation possible values
 EXACT_HESSIAN = acado.HessianApproximationMode.EXACT_HESSIAN
 
+# Time Horizon macros
+AT_START = acado.TimeHorizonElement.AT_START
+AT_END = acado.TimeHorizonElement.AT_END
 
 logger = logging.getLogger(__name__)
 
 def clear_static_counters():
     logger.debug('Clearing up all the static counters')
-    acado.clearAllStaticCounters()
+    return_value = acado.clearAllStaticCounters()
+    if return_value != SUCCESSFUL_RETURN:
+        raise RuntimeError('Error while clearing up static counters')
 
 cdef class DMatrix:
 
@@ -39,7 +59,9 @@ cdef class DMatrix:
         self._thisptr = new acado.DMatrix(nrows, ncols)
 
     def __dealloc__(self):
-        del self._thisptr
+        if self._owner and self._thisptr is not NULL:
+            del self._thisptr
+            self._thisptr = NULL
 
     def set_zero(self):
         (self._thisptr).setZero()
@@ -58,7 +80,9 @@ cdef class DVector:
         self._thisptr = new acado.DVector(dim)
 
     def __dealloc(self):
-        del self._thisptr
+        if self._owner and self._thisptr is not NULL:
+            del self._thisptr
+            self._thisptr = NULL
 
     def set_value(self, int i, double value):
         acado.vector_assign(deref(self._thisptr), i, value)
@@ -102,7 +126,9 @@ cdef class ConstraintComponent:
             self._thisptr = new acado.ConstraintComponent()
 
     def __dealloc__(self):
-        del self._thisptr
+        if self._owner and self._thisptr is not NULL:
+            del self._thisptr
+            self._thisptr = NULL
 
     def __repr__(self):
         # Fake print statement
@@ -110,7 +136,6 @@ cdef class ConstraintComponent:
         return ""
 
     def __le__(self, other):
-        print("ConstraintComponent.__le__", type(self), type(other))
         cdef acado.ConstraintComponent* _result
         cdef ConstraintComponent lhs
 
@@ -128,7 +153,6 @@ cdef class ConstraintComponent:
         return component
 
     def __eq__(self, other):
-        print("ConstraintComponent.__eq__", type(self), type(other))
         if not isinstance(self, ConstraintComponent) and not isinstance(other, float):
             return NotImplemented
 
@@ -152,7 +176,6 @@ cdef class ConstraintComponent:
         return result
 
     def __ge__(self, other):
-        print("Expression.__ge__", type(self), type(other))
 
         cdef acado.ConstraintComponent* _result
         cdef ConstraintComponent lhs
@@ -174,19 +197,20 @@ cdef class ConstraintComponent:
 cdef class Expression:
 
     def __cinit__(self, str name=None, int nrows=0, int ncols=0, initialize=True):
-        if initialize:
-            if name is not None:
-                self._thisptr = new acado.Expression(
-                    name, <unsigned int>nrows, <unsigned int>ncols)
+        if type(self) is Expression:
+            if initialize:
+                if name is not None:
+                    self._thisptr = new acado.Expression(
+                        name, <unsigned int>nrows, <unsigned int>ncols)
+                else:
+                    self._thisptr = new acado.Expression()
             else:
-                self._thisptr = new acado.Expression()
-        else:
-            self._owner = False
+                self._owner = False
 
     def __dealloc__(self):
-        if self._owner:
+        if self._owner and self._thisptr is not NULL:
             del self._thisptr
-        self._thisptr = NULL
+            self._thisptr = NULL
 
     def __repr__(self):
         # Fake print statement
@@ -326,6 +350,25 @@ cdef class Expression:
 
         return result
 
+    def __neg__(self):
+
+        cdef acado.Expression* _result
+        cdef Expression lhs
+        cdef Expression component
+
+        lhs = self
+
+        _result = new acado.Expression(
+            - deref(lhs._thisptr)
+        )
+
+        component = Expression(initialize=False)
+        component._thisptr = _result
+        component._owner = True
+        result = component
+
+        return result
+
     def __ge__(self, other):
 
         cdef acado.ConstraintComponent* _result
@@ -362,21 +405,23 @@ cdef class DifferentialState(ExpressionType):
     """
 
     def __cinit__(self, str name=None, int nrows=0, int ncols=0, initialize=True):
-        if initialize:
-            if name is None:
-                self._thisptr = new acado.DifferentialState()
-            else:
-                self._thisptr = new acado.DifferentialState(
-                    name, <unsigned int>nrows, <unsigned int>ncols
-                )
+        if type(self) is DifferentialState:
+            if initialize:
+                if name is None:
+                    self._thisptr = new acado.DifferentialState()
+                else:
+                    self._thisptr = new acado.DifferentialState(
+                        name, <unsigned int>nrows, <unsigned int>ncols
+                    )
 
 cdef class IntermediateState(ExpressionType):
     """ Python wrapper of the IntermediateState class
     """
 
     def __cinit__(self, initialize=True):
-        if initialize:
-            self._thisptr = new acado.IntermediateState()
+        if type(self) is IntermediateState:
+            if initialize:
+                self._thisptr = new acado.IntermediateState()
 
 
 cdef class TIME(ExpressionType):
@@ -384,33 +429,38 @@ cdef class TIME(ExpressionType):
     """
 
     def __cinit__(self, initialize=True):
-        if initialize:
-            self._thisptr = new acado.TIME()
+        if type(self) == TIME:
+            if initialize:
+                self._thisptr = new acado.TIME()
 
 cdef class Control(ExpressionType):
     def __cinit__(self, initialize=True):
-        if initialize:
-            self._thisptr = new acado.Control()
+        if type(self) == Control:
+            if initialize:
+                self._thisptr = new acado.Control()
 
 cdef class Parameter(ExpressionType):
     def __cinit__(self, initialize=True):
-        if initialize:
-            self._thisptr = new acado.Parameter()
+        if type(self) == Parameter:
+            if initialize:
+                self._thisptr = new acado.Parameter()
 
 cdef class Function:
     """ Python wrapper of the Function class
     """
 
-    def __cinit__(self, initialize=True):
-        if initialize:
-            self._thisptr = new acado.Function()
-            self._owner = True
-        else:
-            self._owner = False
+    def __cinit__(self, initialize=True, *args, **kwargs):
+        if type(self) is Function:
+            if initialize:
+                self._thisptr = new acado.Function()
+                self._owner = True
+            else:
+                self._owner = False
 
     def __dealloc__(self):
-        if self._owner:
+        if self._owner and self._thisptr is not NULL:
             del self._thisptr
+            self._thisptr = NULL
 
     def __repr__(self):
         # Fake print statement
@@ -457,22 +507,36 @@ cdef class Function:
 cdef class DifferentialEquation(Function):
 
     def __cinit__(self, start=None, end=None, initialize=True):
-        if not initialize:
-            self._owner = False
-            return
-
-        cdef float dstart
+        cdef Parameter pstart
         cdef Parameter pend
-        cdef acado.Parameter _parameter
-        if start == end == None:
-            self._thisptr = new acado.DifferentialEquation()
-        else:
-            # FIXME: support other constructors
-            dstart = start
-            pend = end
-            _parameter = deref(<acado.Parameter*>pend._thisptr)
-            self._thisptr = new acado.DifferentialEquation(<double>start, _parameter)
-        self._owner = True
+        cdef acado.Parameter start_parameter
+        cdef acado.Parameter end_parameter
+
+        if type(self) is DifferentialEquation:
+            if not initialize:
+                self._owner = False
+                return
+
+            if start is None and end is None:
+                self._thisptr = new acado.DifferentialEquation()
+            elif isinstance(start, Parameter) and isinstance(end, Parameter):
+                pstart = start
+                pend = end
+                start_parameter = deref(<acado.Parameter*>pstart._thisptr)
+                end_parameter = deref(<acado.Parameter*>pend._thisptr)
+                self._thisptr = new acado.DifferentialEquation(start_parameter, end_parameter)
+            elif not isinstance(start, Parameter) and isinstance(end, Parameter):
+                pend = end
+                end_parameter = deref(<acado.Parameter*>pend._thisptr)
+                self._thisptr = new acado.DifferentialEquation(<double>start, end_parameter)
+            elif isinstance(start, Parameter) and not isinstance(end, Parameter):
+                pstart = start
+                _parameter = deref(<acado.Parameter*>pstart._thisptr)
+                self._thisptr = new acado.DifferentialEquation(end_parameter, <double>end)
+            else:
+                self._thisptr = new acado.DifferentialEquation(<double>start, <double>end)
+
+            self._owner = True
 
     def __eq__(self, other):
         if not isinstance(other, Expression):
@@ -552,44 +616,74 @@ cdef class OCP:
                         self._thisptr = new acado.OCP(ds, de)
 
     def __dealloc__(self):
-        if self._owner:
+        if self._owner and self._thisptr is not NULL:
             del self._thisptr
-        self._thisptr = NULL
+            self._thisptr = NULL
 
-    def minimizeMayerTerm(self, arg):
-        cdef Expression expression = arg
-        self._thisptr.minimizeMayerTerm(deref(expression._thisptr))
+    def minimizeMayerTerm(self, *args):
+        cdef Expression expression
+        cdef int multi_objective_index
+        if len(args) == 2:
+            multi_objective_index = args[0]
+            expression = args[1]
+            self._thisptr.minimizeMayerTerm(multi_objective_index, deref(expression._thisptr))
+        elif len(args) == 1:
+            logger.warning('This call signature is experimental and made lead to segfaults.')
+            expression = args[0]
+            self._thisptr.minimizeMayerTerm(deref(expression._thisptr))
+        else:
+            raise ValueError('Invalid function parameters')
 
     def minimizeLagrangeTerm(self, arg):
         cdef Expression expression = arg
         self._thisptr.minimizeLagrangeTerm(deref(expression._thisptr))
 
     def subjectTo(self, *args):
+
         cdef DifferentialEquation diffeq
         cdef int index
         cdef ConstraintComponent constraint
+        cdef acado.returnValue return_value
+
         if len(args) == 1:
             if isinstance(args[0], DifferentialEquation):
                 diffeq = args[0]
-                self._thisptr.subjectTo(
+                return_value = self._thisptr.subjectTo(
                     deref(<acado.DifferentialEquation*>diffeq._thisptr)
                 )
+            elif isinstance(args[0], ConstraintComponent):
+                constraint = args[0]
+                return_value = self._thisptr.subjectTo(
+                    deref(constraint._thisptr)
+                )
+            else:
+                raise ValueError('Unsupported input type for OCP.subjectTo()')
         elif len(args) == 2:
             index, constraint = args
-            self._thisptr.subjectTo(index, deref(constraint._thisptr))
+            return_value = self._thisptr.subjectTo(index, deref(constraint._thisptr))
+
+        if return_value != SUCCESSFUL_RETURN:
+            raise ValueError('Error while calling subjectTo {}'.format(args))
+
+    def get_number_of_mayer_terms(self):
+        return self._thisptr.getNumberOfMayerTerms()
 
 cdef class VariablesGrid:
 
     def __cinit__(self):
         self._thisptr = new acado.VariablesGrid()
+        self._owner=True
 
     def __dealloc__(self):
-        del self._thisptr
+        if self._owner and self._thisptr is not NULL:
+            del self._thisptr
+            self._thisptr = NULL
 
     def __repr__(self):
         # Fake print statement
         acado.cout << deref(self._thisptr)
         return ""
+    
 
     def pprint(self, str name=""):
         self._thisptr.pprint(acado.cout, name, acado.PrintScheme.PS_DEFAULT)
@@ -598,35 +692,58 @@ cdef class OptimizationAlgorithm:
 
     def __cinit__(self, ocp=None):
         cdef OCP _ocp
-        if ocp:
-            _ocp = ocp
-            self._thisptr = new acado.OptimizationAlgorithm(
-                deref(_ocp._thisptr)
-            )
-        else:
-            self._thisptr = new acado.OptimizationAlgorithm()
 
-        self._owner = True
+        if type(self) is OptimizationAlgorithm: 
+            if ocp:
+                _ocp = ocp
+                self._thisptr = new acado.OptimizationAlgorithm(
+                    deref(_ocp._thisptr)
+                )
+            else:
+                self._thisptr = new acado.OptimizationAlgorithm()
+
+            self._owner = True
 
     def __dealloc__(self):
-        if self._owner:
-            del self._thisptr
+        if type(self) is OptimizationAlgorithm:
+            if self._owner and self._thisptr is not NULL:
+                del self._thisptr
+                self._thisptr = NULL
 
     def set(self, int option_id, value):
+
+        cdef acado.returnValue return_value
         values = {
             HESSIAN_APPROXIMATION: acado.OptionsName.HESSIAN_APPROXIMATION,
             MAX_NUM_ITERATIONS: acado.OptionsName.MAX_NUM_ITERATIONS,
             KKT_TOLERANCE: acado.OptionsName.KKT_TOLERANCE,
+            PARETO_FRONT_GENERATION: acado.OptionsName.PARETO_FRONT_GENERATION,
+            PARETO_FRONT_DISCRETIZATION: acado.OptionsName.PARETO_FRONT_DISCRETIZATION
         }
 
+        if option_id not in values:
+            raise KeyError('{} not defined'.format(option_id))
+
         if isinstance(value, int):
-            self._thisptr.set(<acado.OptionsName> values[option_id], <int>value)
+            return_value = self._thisptr.set(<acado.OptionsName> values[option_id], <int>value)
         elif isinstance(value, float):
             self._thisptr.set(<acado.OptionsName> values[option_id], <double>value)
-        #elif isinstance(value, str):
-        #    # FIXME: sort out the unicode/bytes string questions
-        #    self._thisptr.set(<acado.OptionsName> values[option_id], <str>value)
+        # elif isinstance(value, str):
+           # FIXME: sort out the unicode/bytes string questions
+           # self._thisptr.set(<acado.OptionsName> values[option_id], <char*>value)
 
+        # TODO: consolidate error management. The C++ object does not allow us to access
+        # the integer value of the returnValue object, which makes the code below ugly.
+        if return_value == RET_INVALID_ARGUMENTS:
+            raise ValueError('Invalid argument {}'.format(option_id))
+        if return_value != SUCCESSFUL_RETURN:
+            if return_value == acado.returnValueType.RET_OPTION_ALREADY_EXISTS:
+                raise ValueError('Option already exists')
+            elif  return_value == acado.returnValueType.RET_OPTION_DOESNT_EXIST:
+                raise ValueError('Option does not exist')
+            elif  return_value == acado.returnValueType.RET_INVALID_OPTION:
+                raise ValueError('Invalid option')
+            
     def solve(self):
         _return_value = self._thisptr.solve()
         if _return_value == RET_OPTALG_INIT_FAILED:
@@ -660,3 +777,47 @@ cdef class OptimizationAlgorithm:
         grid._thisptr = new acado.VariablesGrid(_grid)
 
         return grid
+
+cdef class MultiObjectiveAlgorithm(OptimizationAlgorithm):
+
+    def __cinit__(self, ocp=None):
+        cdef OCP _ocp
+
+        if type(self) is MultiObjectiveAlgorithm:
+            if ocp:
+                _ocp = ocp
+                self._mcoptr = new acado.MultiObjectiveAlgorithm(
+                    deref(_ocp._thisptr)
+                )
+            else:
+                self._mcoptr = new acado.MultiObjectiveAlgorithm()
+
+            self._thisptr = <acado.OptimizationAlgorithm*>self._mcoptr
+
+            self._owner = True
+
+    def __dealloc__(self):
+        if type(self) is MultiObjectiveAlgorithm:
+            if self._owner and self._mcoptr is not NULL:
+                del self._mcoptr
+                self._mcoptr = NULL
+                self._thisptr = NULL
+
+    def get_all_differential_states(self, filename):
+       self._mcoptr.getAllDifferentialStates(filename)
+
+    def get_pareto_front(self):
+        cdef acado.VariablesGrid _grid = acado.VariablesGrid()
+        self._mcoptr.getParetoFront(_grid)
+
+        cdef VariablesGrid grid = VariablesGrid()
+        grid._thisptr = new acado.VariablesGrid(_grid)
+
+        return grid        
+
+    def solve_single_objective(self, int number):
+        cdef acado.returnValue _return_value
+        _return_value = self._mcoptr.solveSingleObjective(number)
+
+        if _return_value != SUCCESSFUL_RETURN:
+            raise RuntimeError('Solve single objective failed.')

@@ -1,12 +1,6 @@
 # (C) Copyright 2019 Enthought, Inc., Austin, TX
 # All rights reserved.
 
-import os
-import sys
-
-CUR_DIR = os.path.abspath(os.path.dirname(__file__))
-sys.path.append(os.path.join(CUR_DIR, os.pardir))
-
 from acadopy.api import *
 
 ########################################
@@ -56,7 +50,7 @@ ocp.subjectTo(AT_END, v ==  0.0 )
 
 # as well as the bounds on v, the control input u and the time horizon T
 ocp.subjectTo(-0.01 <= v <=  1.3)
-ocp.subjectTo( u*u  >= 1.0)
+ocp.subjectTo( u*u  >= -1.0)
 
 ########################################
 # Define an optimization problem and solve the OCP
