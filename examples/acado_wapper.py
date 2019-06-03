@@ -1,6 +1,11 @@
+# (C) Copyright 2019 Enthought, Inc., Austin, TX
+# All rights reserved.
+
+""" Example of NLP optimising python function"""
+
 from acadopy.api import (
     expression_from_method, Parameter, OCP, OptimizationAlgorithm,
-    AT_START, MAX_NUM_ITERATIONS, KKT_TOLERANCE, exp)
+    AT_START, MAX_NUM_ITERATIONS, KKT_TOLERANCE)
 
 
 def opt_acadopy(python_func, initial_values, constraints):
@@ -41,7 +46,7 @@ def opt_acadopy(python_func, initial_values, constraints):
         nlp.subjectTo(constraint[0] <= var <= constraint[1])
 
     #: Stating Initial Values
-    for var, value in enumerate(variables, constraints):
+    for var, value in enumerate(variables, initial_values):
         nlp.subjectTo(AT_START, var == value)
 
     #: Inititalising Optimsiation algorithm

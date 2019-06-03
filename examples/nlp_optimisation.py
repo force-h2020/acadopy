@@ -1,7 +1,7 @@
 # (C) Copyright 2019 Enthought, Inc., Austin, TX
 # All rights reserved.
 
-""" Port of examples/getting_started/simple_function.cpp to Python. """
+""" Port of files in examples/nlp to Python. """
 
 from acadopy.api import *
 
