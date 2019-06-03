@@ -119,6 +119,16 @@ cdef expression_from_ref(acado.Expression* expression, owner=False):
     result._owner = owner
     return result
 
+cdef expression_from_method(object method, owner=False):
+    """ Return a Cython Expression from an pure python method.
+    - currently not implemented
+    """
+    cdef Expression result = Expression(initialize=False)
+    #:result._thisptr = expression
+    # considering we're not the owner of the reference
+    result._owner = owner
+    return result
+
 cdef class ConstraintComponent:
 
     def __cinit__(self, initialize=True):
@@ -492,10 +502,6 @@ cdef class Function:
     @property
     def n(self):
         return self._thisptr.getN()
-
-    @property
-    def nx(self):
-        return self._thisptr.getNX()
 
     @property
     def nu(self):
