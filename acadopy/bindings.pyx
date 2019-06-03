@@ -504,11 +504,19 @@ cdef class Function:
         return self._thisptr.getN()
 
     @property
+	    def nx(self):
+	        return self._thisptr.getNX()
+
+    @property
     def nu(self):
         return self._thisptr.getNU()
 
     def isConvex(self):
         return self._thisptr.isConvex()
+
+    def linkPythonNLP(self, FuncHandle):
+
+        self.pythonMethod = FuncHandle
 
 cdef class DifferentialEquation(Function):
 
