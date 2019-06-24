@@ -1,90 +1,18 @@
 # (C) Copyright 2019 Enthought, Inc., Austin, TX
 # All rights reserved.
 
-import faulthandler
-import unittest
+from .utils import BaseAcadoTestCase
 
 from acadopy.api import *
 
-faulthandler.enable()
+class AcadoTestCase(BaseAcadoTestCase):
 
-
-class AcadoTestCase(unittest.TestCase):
-
-    def setUp(self):
-        clear_static_counters()
-
-    def test_instantiate_expression(self):
-
-        for cls in [DifferentialState, IntermediateState, TIME]:
-            instance = cls()
-            self.assertIsInstance(instance, Expression)
-
-    def test_expression_init(self):
-
-        e = Expression()
-        self.assertIsInstance(e, Expression)
-
-        e = Expression("name", 3, 1)
-        self.assertIsInstance(e, Expression)
-
-    def test_expression_print(self):
-
-        e = Expression("name", 3, 1)
-        print(e)
 
     def test_instantiate_function(self):
 
         f = Function()
         self.assertIsInstance(f, Function)
 
-    def test_expression_neg(self):
-
-        e = Expression()
-
-        result  = -e
-
-    def test_expression_add(self):
-
-        x = DifferentialState()
-
-        y = x + 0.5
-
-        self.assertIsInstance(y, Expression)
-        self.assertEqual(y.dim, 1)
-        self.assertEqual(y.num_rows, 1)
-        self.assertEqual(y.num_cols, 1)
-        self.assertFalse(y.is_variable)
-
-        y = 0.5 + x
-
-        self.assertIsInstance(y, Expression)
-
-    def test_expression_division(self):
-
-        x = DifferentialState()
-        z = DifferentialState()
-
-        y = (0.5 + x) / 2.0
-        self.assertIsInstance(y, Expression)
-
-        y = (0.5 + x) / (z - 0.2)
-        self.assertIsInstance(y, Expression)
-
-        y = x / z
-        self.assertIsInstance(y, Expression)
-
-    def test_expression_mult(self):
-
-        x = DifferentialState()
-
-        y = x * 0.5
-
-        self.assertIsInstance(y, Expression)
-
-        y = 0.5 * x
-
-        self.assertIsInstance(y, Expression)
 
     def test_expression_function(self):
 
@@ -120,48 +48,6 @@ class AcadoTestCase(unittest.TestCase):
 
         z = 0.5 * x + 1.0
 
-    def test_differentialstate_init(self):
-
-        x = DifferentialState('x')
-        x = DifferentialState('y', 0, 1)
-
-    def test_differentialstate_equal(self):
-
-        f = DifferentialEquation()
-        s = DifferentialState()
-        v = DifferentialState()
-
-        intermediate = f << dot(s)
-
-        self.assertIsInstance(intermediate, DifferentialEquation)
-        self.assertEqual(intermediate.dim, 0)
-        self.assertEqual(intermediate.n, 0)
-        self.assertEqual(intermediate.nx, 0)
-        self.assertEqual(intermediate.nu, 0)
-
-        self.assertIsInstance(f, DifferentialEquation)
-        self.assertEqual(f.dim, 0)
-        self.assertEqual(f.n, 0)
-        self.assertEqual(f.nx, 0)
-        self.assertEqual(f.nu, 0)
-
-        result = f == v
-
-        self.assertIsInstance(result, DifferentialEquation)
-        self.assertEqual(result.dim, 1)
-        self.assertEqual(result.n, 0)
-        self.assertEqual(result.nx, 2)
-        self.assertEqual(result.nu, 0)
-
-    def test_differentialequation_init(self):
-        start = Parameter()
-        end = Parameter()
-        f = DifferentialEquation()
-        f = DifferentialEquation(0, 10)
-        f = DifferentialEquation(0.0, 10.0)
-        f = DifferentialEquation(start, end)
-        f = DifferentialEquation(start, 10.0)
-        f = DifferentialEquation(0.0, end)
 
     def test_dmatrix(self):
 
