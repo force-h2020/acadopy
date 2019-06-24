@@ -101,7 +101,7 @@ cdef class DVector:
 def as_expression(value):
     if not isinstance(value, Expression):
         try:
-            expression = Expression.factory(value)
+            expression = Expression(value)
         except ValueError:
             return NotImplemented
     else:
@@ -194,19 +194,48 @@ cdef class ConstraintComponent:
         return component
 
 
-cdef class Expression:
+cdef class Expression: 
 
-    def __cinit__(self, str name=None, int nrows=0, int ncols=0, initialize=True):
+    def __cinit__(self, _arg=None, int nrows=0, int ncols=0, initialize=True):
+        """ Support a combination of constructors 
+        
+        - (name, nrows, ncols) 
+        - ctx from double, int, DVector, DMatrix
+        
+        """
+        cdef str name = ""
+        cdef DMatrix _matrix
+        cdef DVector _vector
+
         if type(self) is Expression:
+            
+            is_default_ctx = (_arg is None) or isinstance(_arg, str)
+            if isinstance(_arg, str):
+                name = _arg
+
+            print(_arg, nrows, ncols, is_default_ctx, initialize)
             if initialize:
-                if name is not None:
+                if is_default_ctx:
                     self._thisptr = new acado.Expression(
-                        name, <unsigned int>nrows, <unsigned int>ncols)
+                        <str>name, <unsigned int>nrows, <unsigned int>ncols
+                    )
                 else:
-                    self._thisptr = new acado.Expression()
+                    if isinstance(_arg, float):
+                        self._thisptr = new acado.Expression(<double>_arg)
+                    elif isinstance(_arg, int):
+                        self._thisptr = new acado.Expression(<double>float(_arg))
+                    elif isinstance(_arg, DMatrix):
+                        _matrix = _arg
+                        self._thisptr = new acado.Expression(deref(_matrix._thisptr))
+                    elif isinstance(_arg, DVector):
+                        _vector = _arg
+                        self._thisptr = new acado.Expression(deref(_vector._thisptr))
+                    else:
+                        raise RuntimeError('Unsupported constructor')
+                self._owner = True
             else:
                 self._owner = False
-
+            
     def __dealloc__(self):
         if self._owner and self._thisptr is not NULL:
             del self._thisptr
@@ -214,8 +243,12 @@ cdef class Expression:
 
     def __repr__(self):
         # Fake print statement
-        acado.cout << deref(self._thisptr)
-        return ""
+        if self._thisptr is NULL:
+            # Should not be the case if the bindings are implemented properly
+            return "<Null pointer> / {}".format(self._owner)
+        else:
+            acado.cout << deref(self._thisptr)
+            return ""
 
     @property
     def dim(self):
@@ -232,31 +265,6 @@ cdef class Expression:
     @property
     def is_variable(self):
         return self._thisptr.isVariable()
-
-    @classmethod
-    def factory(cls, value):
-        cdef acado.Expression* _expression
-        cdef DMatrix _matrix
-        cdef DVector _vector
-        if isinstance(value, float):
-            _expression = new acado.Expression(<double>value)
-        elif isinstance(value, int):
-            _expression = new acado.Expression(<double>float(value))
-        elif isinstance(value, DMatrix):
-            _matrix = value
-            _expression = new acado.Expression(deref(_matrix._thisptr))
-        elif isinstance(value, DVector):
-            _vector = value
-            _expression = new acado.Expression(deref(_vector._thisptr))
-        else:
-            raise ValueError(
-                'Creating expression from {} is not supported'.format(
-                    type(value)
-                )
-            )
-        cdef Expression expression = cls()
-        return expression_from_ref(_expression, owner=True)
-
 
     def __add__(self, other):
         cdef acado.Expression*  _result
@@ -388,6 +396,9 @@ cdef class Expression:
         return component
 
 cdef class ExpressionType(Expression):
+    # Is it ok to let users rely on the Expression.__cinit__.
+    # Instantiating an ExpressionType directly does not make sense
+    # as it misses the template info...
     pass
 
 def exp(Expression expression):
@@ -404,24 +415,69 @@ cdef class DifferentialState(ExpressionType):
     """ Python wrapper of the DifferentialState class
     """
 
-    def __cinit__(self, str name=None, int nrows=0, int ncols=0, initialize=True):
+    def __cinit__(self, _arg=None, int nrows=1, int ncols=1, initialize=True):
+        """ Support a combination of constructors 
+        
+        - ()
+        - (name, nrows, ncols) 
+        
+        """
+    
         if type(self) is DifferentialState:
             if initialize:
-                if name is None:
-                    self._thisptr = new acado.DifferentialState()
-                else:
+                if _arg is not None:
                     self._thisptr = new acado.DifferentialState(
-                        name, <unsigned int>nrows, <unsigned int>ncols
+                        <str>_arg, <unsigned int>nrows, <unsigned int>ncols
                     )
+                else:
+                    self._thisptr = new acado.DifferentialState()       
+                self._owner = True
+            else:
+                self._owner = False
 
 cdef class IntermediateState(ExpressionType):
     """ Python wrapper of the IntermediateState class
     """
 
-    def __cinit__(self, initialize=True):
+    def __cinit__(self, _arg=None, int nrows=0, int ncols=0, initialize=True):
+        """ Support a combination of constructors 
+        
+        - (name, nrows, ncols) 
+        - ctx from double, int, DVector, DMatrix
+        
+        """
+        cdef str name = ""
+        cdef DMatrix _matrix
+        cdef DVector _vector
+
         if type(self) is IntermediateState:
+            
+            is_default_ctx = (_arg is None) or isinstance(_arg, str)
+            if isinstance(_arg, str):
+                name = _arg
+
+            print(_arg, nrows, ncols, is_default_ctx, initialize)
             if initialize:
-                self._thisptr = new acado.IntermediateState()
+                if is_default_ctx:
+                    self._thisptr = new acado.IntermediateState(
+                        <str>name, <unsigned int>nrows, <unsigned int>ncols
+                    )
+                else:
+                    if isinstance(_arg, float):
+                        self._thisptr = new acado.IntermediateState(<double>_arg)
+                    elif isinstance(_arg, int):
+                        self._thisptr = new acado.IntermediateState(<double>float(_arg))
+                    elif isinstance(_arg, DMatrix):
+                        _matrix = _arg
+                        self._thisptr = new acado.IntermediateState(deref(_matrix._thisptr))
+                    elif isinstance(_arg, DVector):
+                        _vector = _arg
+                        self._thisptr = new acado.IntermediateState(deref(_vector._thisptr))
+                    else:
+                        raise RuntimeError('Unsupported constructor')
+                self._owner = True
+            else:
+                self._owner = False
 
 
 cdef class TIME(ExpressionType):
