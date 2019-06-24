@@ -8,6 +8,8 @@ from libcpp.string cimport string
 
 cdef extern from 'acado/utils/acado_types.hpp' namespace 'ACADO':
     ctypedef bool BooleanType
+    ctypedef void (*cFcnPtr)( double* x, double* f, void *userData )
+    ctypedef void (*cFcnDPtr)(int number, double* x, double* seed, double* f, double* df, void *userData)
 
 
 cdef extern from 'Eigen/Dense' namespace 'Eigen':
@@ -35,14 +37,15 @@ cdef extern from 'acado/matrix_vector/matrix.hpp' namespace 'ACADO':
 
 cdef extern from 'acado/matrix_vector/vector.hpp' namespace 'ACADO':
 
-    cdef cppclass GenericVector[T]:
+    cdef cppclass GenericVector[T](Matrix):
         GenericVector()
         GenericVector(size_t _dim)
         void setAll( const T& _value)
         GenericVector[T]& setZero()
 
     ctypedef GenericVector[double] DVector
-
+    ctypedef GenericVector[int] IVector
+    ctypedef GenericVector[bool] BVector
 
 cdef extern from "support.h":
     void matrix_assign(DMatrix&, unsigned int, unsigned int, double)
@@ -89,19 +92,27 @@ cdef extern from 'acado/symbolic_expression/expression.hpp' namespace 'ACADO':
         Expression getDot()
 
     cdef cppclass ExpressionType[Derived,Type, AllowCounter](Expression):
-        ExpressionType()
+        ExpressionType() 
+        ExpressionType(string&, unsigned int , unsigned int)
         ExpressionType(const double&)
+        ExpressionType(const DMatrix&)
+        ExpressionType(const DVector&)
+        ExpressionType(const Expression&)
 
 cdef extern from 'acado/symbolic_expression/variable_types.hpp' namespace 'ACADO':
     cdef cppclass Control(ExpressionType):
         Control()
 
     cdef cppclass DifferentialState(ExpressionType):
-        DifferentialState()
-        DifferentialState(string&, unsigned int, unsigned int)
+        DifferentialState() 
+        DifferentialState(string&, unsigned int , unsigned int)
 
     cdef cppclass IntermediateState(ExpressionType):
         IntermediateState()
+        IntermediateState(string&, unsigned int , unsigned int)
+        IntermediateState(const double&)
+        IntermediateState(const DMatrix&)
+        IntermediateState(const DVector&)
 
     cdef cppclass TIME(ExpressionType):
         TIME()
@@ -260,3 +271,13 @@ cdef extern from 'acado/optimization_algorithm/multi_objective_algorithm.hpp' na
         returnValue getAllDifferentialStates(const char*)
         returnValue getAllControls(const char*)
         returnValue getAllParameters(const char*)
+
+
+cdef extern from 'acado/function/c_function.hpp' namespace 'ACADO':
+
+    cdef cppclass CFunction:
+        CFunction()
+        CFunction(unsigned int dim, cFcnPtr cFcn_)
+        CFunction(unsigned int dim, cFcnPtr  cFcn_, cFcnDPtr cFcnDForward_,
+                  cFcnDPtr cFcnDBackward_)
+
