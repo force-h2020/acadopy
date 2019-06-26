@@ -83,6 +83,8 @@ cdef extern from 'acado/symbolic_expression/expression.hpp' namespace 'ACADO':
         Expression operator- (Expression&)
         Expression operator/ (Expression&)
         Expression operator* (Expression&)
+        Expression operator= (Expression&)
+        Expression operator() (unsigned int)
 
         ConstraintComponent operator<= (const double&)
         ConstraintComponent operator>= (const double&)
