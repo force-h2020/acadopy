@@ -24,6 +24,15 @@ class VariableTypesTestCase(BaseAcadoTestCase):
         self.assertEqual(e.num_rows, 1)
         self.assertEqual(e.num_cols, 1)
 
+    def test_expression_set_item(self):
+
+        e = Expression(2)
+
+        e[0] = 1.0
+        e[1] = 2.2
+        
+        print(e)
+
     def test_expression_print(self):
 
         e = Expression("name", 1, 1)

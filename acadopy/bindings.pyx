@@ -213,7 +213,6 @@ cdef class Expression:
             if isinstance(_arg, str):
                 name = _arg
 
-            print(_arg, nrows, ncols, is_default_ctx, initialize)
             if initialize:
                 if is_default_ctx:
                     self._thisptr = new acado.Expression(
@@ -394,6 +393,20 @@ cdef class Expression:
         component._owner = True
 
         return component
+
+    def __setitem__(self, int idx, value):
+
+        cdef Expression rhs, lhs
+        cdef acado.Expression* _rhs, _lhs
+        cdef unsigned int _idx = idx
+
+        rhs = as_expression(value)
+
+        cdef acado.Expression exp = deref(self._thisptr)(_idx)
+        
+        # FIXME: get the assignment operator= to work with
+        exp = deref(rhs._thisptr) # assignment
+
 
 cdef class ExpressionType(Expression):
     # Is it ok to let users rely on the Expression.__cinit__.
