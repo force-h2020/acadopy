@@ -439,11 +439,11 @@ cdef class IntermediateState(ExpressionType):
     """ Python wrapper of the IntermediateState class
     """
 
-    def __cinit__(self, _arg=None, int nrows=0, int ncols=0, initialize=True):
+    def __cinit__(self, _arg=None, int nrows=1, int ncols=1, initialize=True):
         """ Support a combination of constructors 
         
         - (name, nrows, ncols) 
-        - ctx from double, int, DVector, DMatrix
+        - ctx from double, DVector, DMatrix
         
         """
         cdef str name = ""
@@ -452,11 +452,12 @@ cdef class IntermediateState(ExpressionType):
 
         if type(self) is IntermediateState:
             
-            is_default_ctx = (_arg is None) or isinstance(_arg, str)
+            is_default_ctx = (_arg is None) or isinstance(_arg, (str, int))
             if isinstance(_arg, str):
                 name = _arg
+            if isinstance(_arg, int):
+                nrows = _arg
 
-            print(_arg, nrows, ncols, is_default_ctx, initialize)
             if initialize:
                 if is_default_ctx:
                     self._thisptr = new acado.IntermediateState(
@@ -465,8 +466,6 @@ cdef class IntermediateState(ExpressionType):
                 else:
                     if isinstance(_arg, float):
                         self._thisptr = new acado.IntermediateState(<double>_arg)
-                    elif isinstance(_arg, int):
-                        self._thisptr = new acado.IntermediateState(<double>float(_arg))
                     elif isinstance(_arg, DMatrix):
                         _matrix = _arg
                         self._thisptr = new acado.IntermediateState(deref(_matrix._thisptr))

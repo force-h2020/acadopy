@@ -2,7 +2,7 @@ from .utils import BaseAcadoTestCase
 
 from acadopy.api import (
     IntermediateState, DifferentialState, Parameter, DifferentialEquation, dot,
-    TIME, Expression
+    TIME, Expression, Function #, EvaluationPoint
 )
 
 class VariableTypesTestCase(BaseAcadoTestCase):
@@ -61,3 +61,58 @@ class VariableTypesTestCase(BaseAcadoTestCase):
         for cls in [DifferentialState, IntermediateState, TIME]:
             instance = cls()
             self.assertIsInstance(instance, Expression)
+
+
+    def test_intermediatestate_init(self):
+
+
+        i = IntermediateState()
+        i = IntermediateState(2)
+        i = IntermediateState("namne")
+        i = IntermediateState("namne", 2)
+        i = IntermediateState("namne", 3, 4)
+
+
+
+
+    def test_real_example(self):
+
+        t = TIME()
+        y = DifferentialState()
+
+        x = IntermediateState(2)
+
+        self.assertEqual(2, x.dim)
+        self.assertEqual(2, x.num_rows)
+        self.assertEqual(1, x.num_cols)
+
+
+        x[0] = t
+        x[1] = (2*y+1)
+
+        f = Function()
+    
+        z = IntermediateState()
+
+        f << z + z
+
+        print('Evaluation point')
+        zz  = EvaluationPoint(f)
+
+        xx = DVector(1) 
+
+        xx[0] = 2.0
+        tt    = 1.0
+
+        zz.setT( tt )
+        zz.setX( xx )
+
+
+        # EVALUATE f AT THE POINT  (tt,xx):
+        # ---------------------------------
+        result = f.evaluate( zz )
+
+
+        # PRINT THE RESULT:
+        # -----------------
+        result.print()
