@@ -53,50 +53,7 @@ def clear_static_counters():
     if return_value != SUCCESSFUL_RETURN:
         raise RuntimeError('Error while clearing up static counters')
 
-cdef class DMatrix:
 
-    def __cinit__(self, nrows=0, ncols=0):
-        self._thisptr = new acado.DMatrix(nrows, ncols)
-
-    def __dealloc__(self):
-        if self._owner and self._thisptr is not NULL:
-            del self._thisptr
-            self._thisptr = NULL
-
-    def set_zero(self):
-        (self._thisptr).setZero()
-
-    def set_value(self, int i, int j, double value):
-        acado.matrix_assign(deref(self._thisptr), i, j, value)
-
-    def __setitem__(self, index, double value):
-        cdef unsigned int i, j
-        i, j = index
-        self.set_value(i, j, value)
-
-cdef class DVector:
-
-    def __cinit__(self, dim=0):
-        self._thisptr = new acado.DVector(dim)
-
-    def __dealloc(self):
-        if self._owner and self._thisptr is not NULL:
-            del self._thisptr
-            self._thisptr = NULL
-
-    def set_value(self, int i, double value):
-        acado.vector_assign(deref(self._thisptr), i, value)
-
-    def __setitem__(self, index, double value):
-        cdef unsigned int i
-        i = index
-        self.set_value(i, value)
-
-    def set_all(self, float value):
-        self._thisptr.setAll(value)
-
-    def set_zero(self):
-        (self._thisptr).setZero()
 
 def as_expression(value):
     if not isinstance(value, Expression):
