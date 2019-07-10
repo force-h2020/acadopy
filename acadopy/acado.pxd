@@ -282,4 +282,6 @@ cdef extern from 'acado/function/c_function.hpp' namespace 'ACADO':
         CFunction(unsigned int dim, cFcnPtr cFcn_)
         CFunction(unsigned int dim, cFcnPtr  cFcn_, cFcnDPtr cFcnDForward_,
                   cFcnDPtr cFcnDBackward_)
+        Expression operator()( const Expression &arg )
+        returnValue setUserData(void* user_data_)
 
