@@ -1,6 +1,6 @@
 from .utils import BaseAcadoTestCase
 
-from acadopy.api import Expression, DifferentialState
+from acadopy.bindings import Expression, DifferentialState
 
 class VariableTypesTestCase(BaseAcadoTestCase):
 

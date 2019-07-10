@@ -1,6 +1,6 @@
 from .utils import BaseAcadoTestCase
 
-from acadopy.api import (
+from acadopy.bindings import (
     IntermediateState, DifferentialState, Parameter, DifferentialEquation, dot,
     TIME, Expression, Function #, EvaluationPoint
 )

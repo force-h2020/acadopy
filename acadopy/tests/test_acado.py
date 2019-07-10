@@ -3,7 +3,7 @@
 
 from .utils import BaseAcadoTestCase
 
-from acadopy.api import *
+from acadopy.bindings import *
 
 class AcadoTestCase(BaseAcadoTestCase):
 
