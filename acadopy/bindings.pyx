@@ -5,6 +5,7 @@
 # cython: language_level=3
 # cython: c_string_type=unicode, c_string_encoding=utf8
 
+from libcpp cimport bool
 
 import logging
 
@@ -108,8 +109,7 @@ def as_expression(value):
         expression = value
     return expression
 
-
-cdef expression_from_ref(acado.Expression* expression, owner=False):
+cdef expression_from_ref(acado.Expression* expression, owner):
     """ Return a Cython Expression from an ACADO Expression reference.
 
     """
@@ -397,7 +397,8 @@ cdef class Expression:
     def __setitem__(self, int idx, value):
 
         cdef Expression rhs, lhs
-        cdef acado.Expression* _rhs, _lhs
+        cdef acado.Expression* _rhs
+        cdef acado.Expression* _lhs
         cdef unsigned int _idx = idx
 
         rhs = as_expression(value)

@@ -1,9 +1,12 @@
 # (C) Copyright 2019 Enthought, Inc., Austin, TX
 # All rights reserved.
+# distutils: language=c++
 # cython: language_level=3
 
 from libcpp cimport bool
 from . cimport acado
+
+
 
 cdef class DMatrix:
     cdef acado.DMatrix* _thisptr
@@ -60,3 +63,5 @@ cdef class OptimizationAlgorithm:
 
 cdef class MultiObjectiveAlgorithm(OptimizationAlgorithm):
     cdef acado.MultiObjectiveAlgorithm* _mcoptr
+
+cdef expression_from_ref(acado.Expression* expression, owner)
