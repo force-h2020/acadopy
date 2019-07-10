@@ -51,7 +51,7 @@ example_ext = Extension(
 
 setup(
     name='acadopy',
-    packages=['acadopy'],
+    packages=['acadopy', 'acadopy.tests'],
     license="BSD",
     version=0.1,
     setup_requires=['cython>=0.29.6'],
