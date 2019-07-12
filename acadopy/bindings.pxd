@@ -42,13 +42,6 @@ cdef class Control(ExpressionType):
 cdef class Parameter(ExpressionType):
     pass
 
-cdef class Function:
-    cdef acado.Function* _thisptr
-    cdef bool _owner
-
-cdef class DifferentialEquation(Function):
-    pass
-
 cdef class OCP:
     cdef acado.OCP* _thisptr
     cdef bool _owner
