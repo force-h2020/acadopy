@@ -40,6 +40,8 @@ cdef extern from 'acado/matrix_vector/vector.hpp' namespace 'ACADO':
     cdef cppclass GenericVector[T](Matrix):
         GenericVector()
         GenericVector(size_t _dim)
+        GenericVector(GenericVector[T] v) # fake copy constructor
+
         void setAll( const T& _value)
         GenericVector[T]& setZero()
 
@@ -239,6 +241,7 @@ cdef extern from "<iostream>" namespace "std":
         ostream& operator<< (Expression&)
         ostream& operator<< (Function&)
         ostream& operator<< (VariablesGrid&)
+        ostream& operator<< (DVector&)
     ostream cout
 
 cdef extern from 'acado/variables_grid/variables_grid.hpp' namespace 'ACADO':

@@ -79,8 +79,8 @@ cdef class DMatrix:
 
 cdef class DVector:
 
-    def __cinit__(self, dim=0):
-        self._thisptr = new acado.DVector(dim)
+    def __cinit__(self, int dim=0):
+        self._thisptr = new acado.DVector(<size_t>dim)
 
     def __dealloc(self):
         if self._owner and self._thisptr is not NULL:
@@ -100,6 +100,11 @@ cdef class DVector:
 
     def set_zero(self):
         (self._thisptr).setZero()
+
+    def __repr__(self):
+        # Fake print statement
+        acado.cout << deref(self._thisptr)
+        return ""
 
 def as_expression(value):
     if not isinstance(value, Expression):
