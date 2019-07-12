@@ -53,20 +53,15 @@ class FunctionTestCase(BaseAcadoTestCase):
         z = 0.5 * x + 1.0
 
 def my_py_function(x_):
-    """ here x is an 1-D array with shape (n,) and `args`
-    is a tuple of the fixed parameters needed to completely
-    specify the function. """
+    """ here x is an 1-D array with shape (dim,)  """
     
     t = x_[0]
     x = x_[1]
-
-    print (x_)
     
     f_ = np.empty_like(x_)
     f_[0] = x*x + t
     f_[1] = t
 
-    print(f_)
     return f_
 
 class CFunctionTestCase(BaseAcadoTestCase):
@@ -119,9 +114,7 @@ class CFunctionTestCase(BaseAcadoTestCase):
 
         xx = DVector(1) 
 
-        xx[0] = 2.0
-
-        print(xx)
+        xx[0] = -3
         tt    = 1.0
 
         zz.set_t( tt )

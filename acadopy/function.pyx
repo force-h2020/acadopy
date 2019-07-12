@@ -193,18 +193,15 @@ cdef void callback(double* x_, double* f_, void* userData) with gil:
         x_ary = np.asarray(<cnp.float64_t[:dimension]> x_)
         f_ary = np.asarray(<cnp.float64_t[:dimension]> f_)
     except Exception as exc:
-        print('Error while converting to np array')
+        print('Error while converting inputs to numpy arrays')
         import traceback
         traceback.print_exc()
-
-    print('Function evaluation')
 
     try:
         f_ary[:] = obj.func(x_ary)
     except Exception as exc:
-        print('Error while executing function')
-        print(exc)
-
+        print('Error while evaluating the function')
+        traceback.print_exc()
 
 cdef class PyFunction:
     """ Cython wrapper around an acado CFunction and its
@@ -219,7 +216,6 @@ cdef class PyFunction:
 
         self.func = func
         self.dim = dim
-        print('Set dimensions of {} to {}'.format(self, self.dim))
 
         # FIXME: I need a function pointer with a valid signature for a cFcnPtr
         # If there is no obvious way to do it, we can use the userData pointer
@@ -233,7 +229,9 @@ cdef class PyFunction:
         self._thisptr.setUserData(<void*>self)
 
     def __call__(self, Expression exp):
-        """ Call CFunction operator(const Expression args) which returns an Expression. """
+        """ Call `CFunction.operator(const Expression args)` which returns an Expression. 
+        
+        """
         cdef acado.Expression _exp
         cdef acado.Expression* _result
         cdef acado.CFunction _func
