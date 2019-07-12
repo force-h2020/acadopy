@@ -8,6 +8,8 @@ from acadopy.bindings import (
 
 from acadopy.function import PyFunction, EvaluationPoint, Function
 
+import numpy as np
+
 class FunctionTestCase(BaseAcadoTestCase):
 
     def test_instantiate_function(self):
@@ -58,11 +60,14 @@ def my_py_function(x_):
     t = x_[0]
     x = x_[1]
 
+    print (x_)
+    
     f_ = np.empty_like(x_)
-    f[0] = x*x + t
-    f[1] = t
+    f_[0] = x*x + t
+    f_[1] = t
 
-    return f
+    print(f_)
+    return f_
 
 class CFunctionTestCase(BaseAcadoTestCase):
 
@@ -115,6 +120,8 @@ class CFunctionTestCase(BaseAcadoTestCase):
         xx = DVector(1) 
 
         xx[0] = 2.0
+
+        print(xx)
         tt    = 1.0
 
         zz.set_t( tt )
