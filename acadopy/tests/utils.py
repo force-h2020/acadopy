@@ -1,7 +1,7 @@
 import faulthandler
 import unittest
 
-from acadopy.api import clear_static_counters
+from acadopy.bindings import clear_static_counters
 
 faulthandler.enable()
 

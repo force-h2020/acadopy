@@ -1,9 +1,11 @@
 from .utils import BaseAcadoTestCase
 
 from acadopy.bindings import (
-    IntermediateState, DifferentialState, Parameter, DifferentialEquation, dot,
-    TIME, Expression, Function #, EvaluationPoint
+    IntermediateState, DifferentialState, Parameter , dot,
+    TIME, Expression, DVector
 )
+
+from acadopy.function import DifferentialEquation, Function, EvaluationPoint
 
 class VariableTypesTestCase(BaseAcadoTestCase):
 
@@ -104,8 +106,8 @@ class VariableTypesTestCase(BaseAcadoTestCase):
         xx[0] = 2.0
         tt    = 1.0
 
-        zz.setT( tt )
-        zz.setX( xx )
+        zz.set_t( tt )
+        zz.set_x( xx )
 
 
         # EVALUATE f AT THE POINT  (tt,xx):
@@ -115,4 +117,4 @@ class VariableTypesTestCase(BaseAcadoTestCase):
 
         # PRINT THE RESULT:
         # -----------------
-        result.print()
+        print(result)

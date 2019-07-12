@@ -4,49 +4,11 @@
 from .utils import BaseAcadoTestCase
 
 from acadopy.bindings import *
+from acadopy.function import DifferentialEquation
 
 class AcadoTestCase(BaseAcadoTestCase):
 
 
-    def test_instantiate_function(self):
-
-        f = Function()
-        self.assertIsInstance(f, Function)
-
-
-    def test_expression_function(self):
-
-        x = DifferentialState()
-        z = exp(x)
-
-        self.assertIsInstance(z, Expression)
-        self.assertEqual(z.dim, 1)
-        self.assertEqual(z.num_rows, 1)
-        self.assertEqual(z.num_cols, 1)
-        self.assertFalse(z.is_variable)
-
-    def test_function_loading_expression(self):
-
-        f = Function()
-        x = DifferentialState()
-
-        expression = exp(x + 1)
-
-        self.assertEqual(f.dim, 0)
-        self.assertEqual(f.nx, 0)
-
-        f << expression
-
-        self.assertEqual(f.dim, 1)
-        self.assertEqual(f.nx, 1)
-
-    def test_simple_function(self):
-        x = DifferentialState()
-        z = IntermediateState()
-        t = TIME()
-        f = Function()
-
-        z = 0.5 * x + 1.0
 
 
     def test_dmatrix(self):
