@@ -8,23 +8,202 @@
 from cython.operator cimport dereference as deref
 
 from . cimport acado
-from .bindings cimport Expression, expression_from_ref
+from .bindings cimport (
+    Expression, expression_from_ref, Parameter, DVector
+)
 
-cimport numpy as np
+cimport numpy as cnp
 import numpy as np
 
 import inspect
 
-cdef void callback(double* x_, double* f_, void* userData):
+cdef class Function:
+    """ Python wrapper of the Function class
+    """
+
+    def __cinit__(self, initialize=True, *args, **kwargs):
+        if type(self) is Function:
+            if initialize:
+                self._thisptr = new acado.Function()
+                self._owner = True
+            else:
+                self._owner = False
+
+    def __dealloc__(self):
+        if self._owner and self._thisptr is not NULL:
+            del self._thisptr
+            self._thisptr = NULL
+
+    def __repr__(self):
+        # Fake print statement
+        acado.cout << deref(self._thisptr)
+        return ""
+
+    def __lshift__(self, other):
+        cdef Expression rhs
+        cdef Function lhs
+        cdef acado.Function _function
+
+        if isinstance(self, Function) and isinstance(other, Expression):
+            lhs = self
+            rhs = other
+            _function = deref(lhs._thisptr)
+
+            _function << deref(rhs._thisptr)
+
+            lhs._thisptr = new acado.Function(_function)
+
+            return self
+        else:
+            return NotImplemented
+
+    @property
+    def dim(self):
+        return self._thisptr.getDim()
+
+    @property
+    def n(self):
+        return self._thisptr.getN()
+
+    @property
+    def nx(self):
+        return self._thisptr.getNX()
+
+    @property
+    def nu(self):
+        return self._thisptr.getNU()
+
+    def isConvex(self):
+        return self._thisptr.isConvex()
+
+    def evaluate(self, EvaluationPoint pt):
+
+        cdef acado.DVector* result = new acado.DVector(
+            self._thisptr.evaluate(deref(pt._thisptr))
+        )
+        cdef DVector v = DVector()
+        del v._thisptr
+        v._thisptr = result
+
+        return v
+
+cdef class DifferentialEquation(Function):
+
+    def __cinit__(self, start=None, end=None, initialize=True):
+        cdef Parameter pstart
+        cdef Parameter pend
+        cdef acado.Parameter start_parameter
+        cdef acado.Parameter end_parameter
+
+        if type(self) is DifferentialEquation:
+            if not initialize:
+                self._owner = False
+                return
+
+            if start is None and end is None:
+                self._thisptr = new acado.DifferentialEquation()
+            elif isinstance(start, Parameter) and isinstance(end, Parameter):
+                pstart = start
+                pend = end
+                start_parameter = deref(<acado.Parameter*>pstart._thisptr)
+                end_parameter = deref(<acado.Parameter*>pend._thisptr)
+                self._thisptr = new acado.DifferentialEquation(start_parameter, end_parameter)
+            elif not isinstance(start, Parameter) and isinstance(end, Parameter):
+                pend = end
+                end_parameter = deref(<acado.Parameter*>pend._thisptr)
+                self._thisptr = new acado.DifferentialEquation(<double>start, end_parameter)
+            elif isinstance(start, Parameter) and not isinstance(end, Parameter):
+                pstart = start
+                _parameter = deref(<acado.Parameter*>pstart._thisptr)
+                self._thisptr = new acado.DifferentialEquation(end_parameter, <double>end)
+            else:
+                self._thisptr = new acado.DifferentialEquation(<double>start, <double>end)
+
+            self._owner = True
+
+    def __eq__(self, other):
+        if not isinstance(other, Expression):
+            return NotImplemented
+
+        cdef acado.DifferentialEquation _result
+        cdef Expression rhs
+        cdef DifferentialEquation lhs
+        cdef DifferentialEquation result
+        cdef acado.DifferentialEquation _diffeq
+
+        lhs = self
+        rhs = other
+
+        _diffeq = deref(<acado.DifferentialEquation*>lhs._thisptr)
+        _result = _diffeq == deref(rhs._thisptr)
+
+        lhs._thisptr = new acado.DifferentialEquation(_result)
+
+        return self
+
+    def __lshift__(self, other):
+        cdef Expression rhs
+        cdef DifferentialEquation lhs
+        cdef acado.DifferentialEquation _diffeq
+
+        if isinstance(self, Function) and isinstance(other, Expression):
+            lhs = self
+            rhs = other
+            _diffeq = deref(<acado.DifferentialEquation*>lhs._thisptr)
+
+            _diffeq << deref(rhs._thisptr)
+
+            lhs._thisptr = new acado.DifferentialEquation(_diffeq)
+
+            return self
+        else:
+            return NotImplemented
+
+cdef class EvaluationPoint:
+
+    def __cinit__(self, Function f):
+        self._thisptr = new acado.EvaluationPoint(deref(f._thisptr))
+
+    def set_x(self, DVector v):
+        self._thisptr.setX(deref(v._thisptr))
+
+    def set_t(self, float t):
+        self._thisptr.setT(<double> t)
+
+cdef void callback(double* x_, double* f_, void* userData) with gil:
     """ Retrieves a Python function from userData """
         
-    obj = <object> userData
-    dimension = obj.dim
+    cdef PyFunction obj = <object> userData
+    cdef int dimension = obj.dim
 
-    x_ary = np.asarray(<np.float64_t[:dimension]> x_)
-    f_ary = np.asarray(<np.float64_t[:dimension]> f_)
+    cdef float x0 = x_[0]
+    cdef float x1 = x_[1]
+    cdef float f0 = f_[0]
+    cdef float f1 = f_[1]
 
-    f_ary[:] = obj.func(x_ary)
+    print ("x0 {} x1 {}".format(x0, x1))
+    print ("f0 {} f1 {}".format(f0, f1))
+
+    #FIXME: debug this - not sure why it happens: Bad use of Cython, Version of numpy, ...
+    # Traceback (most recent call last):
+    #     File "acadopy/function.pyx", line 191, in acadopy.function.callback
+    #         x_ary = np.asarray(<cnp.float64_t[:dimension]> x_)
+    # TypeError: expected bytes, str found
+    try:
+        x_ary = np.asarray(<cnp.float64_t[:dimension]> x_)
+        f_ary = np.asarray(<cnp.float64_t[:dimension]> f_)
+    except Exception as exc:
+        print('Error while converting to np array')
+        import traceback
+        traceback.print_exc()
+
+    print('Function evaluation')
+
+    try:
+        f_ary[:] = obj.func(x_ary)
+    except Exception as exc:
+        print('Error while executing function')
+        print(exc)
 
 
 cdef class PyFunction:
@@ -33,13 +212,14 @@ cdef class PyFunction:
      
     """
 
-    def __init__(self, object func, int dim):
+    def __cinit__(self, object func, int dim):
 
         if not inspect.isfunction(func):
             raise ValueError('Only functions are supported')
 
         self.func = func
         self.dim = dim
+        print('Set dimensions of {} to {}'.format(self, self.dim))
 
         # FIXME: I need a function pointer with a valid signature for a cFcnPtr
         # If there is no obvious way to do it, we can use the userData pointer
@@ -53,7 +233,7 @@ cdef class PyFunction:
         self._thisptr.setUserData(<void*>self)
 
     def __call__(self, Expression exp):
-        """ Call CFunction operator(const Expression args) which returns an exprssion. """
+        """ Call CFunction operator(const Expression args) which returns an Expression. """
         cdef acado.Expression _exp
         cdef acado.Expression* _result
         cdef acado.CFunction _func

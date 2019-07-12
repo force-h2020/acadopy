@@ -14,6 +14,8 @@ from cython.operator cimport dereference as deref
 
 from . cimport acado
 
+from .function cimport DifferentialEquation
+
 # FIXME: consider moving these global definitions to their own submodule
 # Return codes
 SUCCESSFUL_RETURN = acado.returnValueType.SUCCESSFUL_RETURN
@@ -513,137 +515,6 @@ cdef class Parameter(ExpressionType):
         if type(self) == Parameter:
             if initialize:
                 self._thisptr = new acado.Parameter()
-
-cdef class Function:
-    """ Python wrapper of the Function class
-    """
-
-    def __cinit__(self, initialize=True, *args, **kwargs):
-        if type(self) is Function:
-            if initialize:
-                self._thisptr = new acado.Function()
-                self._owner = True
-            else:
-                self._owner = False
-
-    def __dealloc__(self):
-        if self._owner and self._thisptr is not NULL:
-            del self._thisptr
-            self._thisptr = NULL
-
-    def __repr__(self):
-        # Fake print statement
-        acado.cout << deref(self._thisptr)
-        return ""
-
-    def __lshift__(self, other):
-        cdef Expression rhs
-        cdef Function lhs
-        cdef acado.Function _function
-
-        if isinstance(self, Function) and isinstance(other, Expression):
-            lhs = self
-            rhs = other
-            _function = deref(lhs._thisptr)
-
-            _function << deref(rhs._thisptr)
-
-            lhs._thisptr = new acado.Function(_function)
-
-            return self
-        else:
-            return NotImplemented
-
-    @property
-    def dim(self):
-        return self._thisptr.getDim()
-
-    @property
-    def n(self):
-        return self._thisptr.getN()
-
-    @property
-    def nx(self):
-        return self._thisptr.getNX()
-
-    @property
-    def nu(self):
-        return self._thisptr.getNU()
-
-    def isConvex(self):
-        return self._thisptr.isConvex()
-
-cdef class DifferentialEquation(Function):
-
-    def __cinit__(self, start=None, end=None, initialize=True):
-        cdef Parameter pstart
-        cdef Parameter pend
-        cdef acado.Parameter start_parameter
-        cdef acado.Parameter end_parameter
-
-        if type(self) is DifferentialEquation:
-            if not initialize:
-                self._owner = False
-                return
-
-            if start is None and end is None:
-                self._thisptr = new acado.DifferentialEquation()
-            elif isinstance(start, Parameter) and isinstance(end, Parameter):
-                pstart = start
-                pend = end
-                start_parameter = deref(<acado.Parameter*>pstart._thisptr)
-                end_parameter = deref(<acado.Parameter*>pend._thisptr)
-                self._thisptr = new acado.DifferentialEquation(start_parameter, end_parameter)
-            elif not isinstance(start, Parameter) and isinstance(end, Parameter):
-                pend = end
-                end_parameter = deref(<acado.Parameter*>pend._thisptr)
-                self._thisptr = new acado.DifferentialEquation(<double>start, end_parameter)
-            elif isinstance(start, Parameter) and not isinstance(end, Parameter):
-                pstart = start
-                _parameter = deref(<acado.Parameter*>pstart._thisptr)
-                self._thisptr = new acado.DifferentialEquation(end_parameter, <double>end)
-            else:
-                self._thisptr = new acado.DifferentialEquation(<double>start, <double>end)
-
-            self._owner = True
-
-    def __eq__(self, other):
-        if not isinstance(other, Expression):
-            return NotImplemented
-
-        cdef acado.DifferentialEquation _result
-        cdef Expression rhs
-        cdef DifferentialEquation lhs
-        cdef DifferentialEquation result
-        cdef acado.DifferentialEquation _diffeq
-
-        lhs = self
-        rhs = other
-
-        _diffeq = deref(<acado.DifferentialEquation*>lhs._thisptr)
-        _result = _diffeq == deref(rhs._thisptr)
-
-        lhs._thisptr = new acado.DifferentialEquation(_result)
-
-        return self
-
-    def __lshift__(self, other):
-        cdef Expression rhs
-        cdef DifferentialEquation lhs
-        cdef acado.DifferentialEquation _diffeq
-
-        if isinstance(self, Function) and isinstance(other, Expression):
-            lhs = self
-            rhs = other
-            _diffeq = deref(<acado.DifferentialEquation*>lhs._thisptr)
-
-            _diffeq << deref(rhs._thisptr)
-
-            lhs._thisptr = new acado.DifferentialEquation(_diffeq)
-
-            return self
-        else:
-            return NotImplemented
 
 
 cdef class OCP:

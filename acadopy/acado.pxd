@@ -144,6 +144,8 @@ cdef extern from 'acado/function/function_.hpp' namespace 'ACADO':
 
         BooleanType isConvex()
 
+        DVector evaluate( const EvaluationPoint &x)
+
 cdef extern from 'acado/function/differential_equation.hpp' namespace 'ACADO':
 
     cdef cppclass DifferentialEquation(Function):
@@ -274,6 +276,14 @@ cdef extern from 'acado/optimization_algorithm/multi_objective_algorithm.hpp' na
         returnValue getAllControls(const char*)
         returnValue getAllParameters(const char*)
 
+
+cdef extern from 'acado/function/evaluation_point.hpp' namespace 'ACADO':
+
+    cdef cppclass EvaluationPoint:
+        EvaluationPoint()
+        EvaluationPoint(const Function &f)
+        returnValue setT (const double &t)
+        returnValue setX (const DVector &x)
 
 cdef extern from 'acado/function/c_function.hpp' namespace 'ACADO':
 
