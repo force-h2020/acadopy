@@ -18,9 +18,9 @@ bindings_ext = Extension(
     ],
 )
 
-cfunction_ext = Extension(
-    name='acadopy.c_function',
-    sources=['acadopy/c_function.pyx'],
+function_ext = Extension(
+    name='acadopy.function',
+    sources=['acadopy/function.pyx'],
     libraries=['acado_toolkit_s'],
     language='c++',
     include_dirs=[
@@ -34,27 +34,12 @@ cfunction_ext = Extension(
     ],
 )
 
-example_ext = Extension(
-    name='acadopy.example',
-    sources=['acadopy/example.pyx'],
-    libraries=['acado_toolkit_s'],
-    language='c++',
-    include_dirs=[
-        '/usr/local/include/',
-        '/usr/local/include/acado',
-        '/usr/local/include/acado/external_packages/eigen3'
-    ],
-    library_dirs=[
-        '/usr/local/lib'
-    ],
-)
-
 setup(
     name='acadopy',
     packages=['acadopy', 'acadopy.tests'],
     license="BSD",
     version=0.1,
     setup_requires=['cython>=0.29.6'],
-    ext_modules=cythonize([bindings_ext , cfunction_ext, example_ext]),
+    ext_modules=cythonize([bindings_ext , function_ext]),
     zip_safe=False,
 )
