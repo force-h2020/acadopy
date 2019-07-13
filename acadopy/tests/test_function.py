@@ -1,5 +1,5 @@
 
-from .utils import BaseAcadoTestCase
+from acadopy.tests.utils import BaseAcadoTestCase
 
 from acadopy.bindings import (
     Expression, TIME, IntermediateState, DifferentialState, exp,

@@ -1,7 +1,7 @@
 # (C) Copyright 2019 Enthought, Inc., Austin, TX
 # All rights reserved.
 
-from .utils import BaseAcadoTestCase
+from acadopy.tests.utils import BaseAcadoTestCase
 
 from acadopy.bindings import *
 from acadopy.function import DifferentialEquation

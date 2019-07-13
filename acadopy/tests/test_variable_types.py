@@ -1,4 +1,4 @@
-from .utils import BaseAcadoTestCase
+from acadopy.tests.utils import BaseAcadoTestCase
 
 from acadopy.bindings import (
     IntermediateState, DifferentialState, Parameter , dot,
