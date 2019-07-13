@@ -124,9 +124,6 @@ cdef extern from 'acado/symbolic_expression/variable_types.hpp' namespace 'ACADO
     cdef cppclass Parameter(ExpressionType):
         Parameter()
 
-    cdef cppclass IntermediateState(ExpressionType):
-        IntermediateState()
-
 cdef extern from 'acado/symbolic_expression/acado_syntax.hpp':
     returnValue clearAllStaticCounters()
     IntermediateState exp(const Expression&)
