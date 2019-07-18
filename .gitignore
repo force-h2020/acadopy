@@ -102,5 +102,4 @@ venv.bak/
 
 # mypy
 .mypy_cache/
-acadopy/bindings.cpp
-acadopy/function.cpp
+acadopy/*.cpp
