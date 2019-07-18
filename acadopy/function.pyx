@@ -174,21 +174,8 @@ cdef void callback(double* x_, double* f_, void* userData) with gil:
     """ Retrieves a Python function from userData """
         
     cdef PyFunction obj = <object> userData
-    cdef int dimension = obj.dim
+    cdef int dimension = obj._dim
 
-    cdef float x0 = x_[0]
-    cdef float x1 = x_[1]
-    cdef float f0 = f_[0]
-    cdef float f1 = f_[1]
-
-    print ("x0 {} x1 {}".format(x0, x1))
-    print ("f0 {} f1 {}".format(f0, f1))
-
-    #FIXME: debug this - not sure why it happens: Bad use of Cython, Version of numpy, ...
-    # Traceback (most recent call last):
-    #     File "acadopy/function.pyx", line 191, in acadopy.function.callback
-    #         x_ary = np.asarray(<cnp.float64_t[:dimension]> x_)
-    # TypeError: expected bytes, str found
     try:
         x_ary = np.asarray(<cnp.float64_t[:dimension]> x_)
         f_ary = np.asarray(<cnp.float64_t[:dimension]> f_)
@@ -209,13 +196,13 @@ cdef class PyFunction:
      
     """
 
-    def __cinit__(self, object func, int dim):
+    def __cinit__(self, int dim, object func):
 
         if not inspect.isfunction(func):
             raise ValueError('Only functions are supported')
 
         self.func = func
-        self.dim = dim
+        self._dim = dim
 
         # FIXME: I need a function pointer with a valid signature for a cFcnPtr
         # If there is no obvious way to do it, we can use the userData pointer
@@ -227,6 +214,10 @@ cdef class PyFunction:
             dim,  f_ptr
         )
         self._thisptr.setUserData(<void*>self)
+
+    property dim:
+        def __get__(self):
+            return self._thisptr.getDim()
 
     def __call__(self, Expression exp):
         """ Call `CFunction.operator(const Expression args)` which returns an Expression. 

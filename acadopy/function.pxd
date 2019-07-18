@@ -18,7 +18,7 @@ cdef void callback(double* x_, double* f_, void* userData) with gil
 cdef class PyFunction:
     cdef acado.CFunction* _thisptr
     cdef object func
-    cdef int dim
+    cdef int _dim
 
 cdef class EvaluationPoint:
     cdef acado.EvaluationPoint* _thisptr
