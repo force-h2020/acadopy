@@ -65,10 +65,15 @@ cdef extern from 'acado/symbolic_expression/constraint_component.hpp' namespace 
         ConstraintComponent operator>= (const double&)
         ConstraintComponent operator== (const double&)
 
+cdef extern from 'acado/symbolic_operator/operator.hpp' namespace 'ACADO':
+    cdef cppclass Operator:
+        Operator& assign "operator="(const Expression&)
+
 cdef extern from 'acado/symbolic_expression/expression.hpp' namespace 'ACADO':
 
     cdef cppclass Expression:
         Expression()
+        Expression(const Operator&)
         Expression(const double&)
         Expression(const DMatrix&)
         Expression(const DVector&)
@@ -85,8 +90,12 @@ cdef extern from 'acado/symbolic_expression/expression.hpp' namespace 'ACADO':
         Expression operator- (Expression&)
         Expression operator/ (Expression&)
         Expression operator* (Expression&)
-        Expression operator= (Expression&)
-        Expression operator() (unsigned int)
+        Expression& assign "operator=" (Expression&)
+        Expression get_expression "operator()" (unsigned int)        
+        Operator& get_operator "operator()" (unsigned int)
+
+
+        Expression getRow(const unsigned int rowIdx)
 
         ConstraintComponent operator<= (const double&)
         ConstraintComponent operator>= (const double&)
@@ -294,4 +303,5 @@ cdef extern from 'acado/function/c_function.hpp' namespace 'ACADO':
                   cFcnDPtr cFcnDBackward_)
         Expression operator()( const Expression &arg )
         returnValue setUserData(void* user_data_)
+        unsigned int getDim()
 

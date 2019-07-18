@@ -214,6 +214,8 @@ cdef class Expression:
         cdef DMatrix _matrix
         cdef DVector _vector
 
+        self._owner = False
+
         if type(self) is Expression:
             
             is_default_ctx = (_arg is None) or isinstance(_arg, str)
@@ -239,13 +241,12 @@ cdef class Expression:
                     else:
                         raise RuntimeError('Unsupported constructor')
                 self._owner = True
-            else:
-                self._owner = False
             
     def __dealloc__(self):
-        if self._owner and self._thisptr is not NULL:
-            del self._thisptr
-            self._thisptr = NULL
+        if self._owner:
+            if self._thisptr is not NULL:
+                del self._thisptr
+        self._thisptr = NULL
 
     def __repr__(self):
         # Fake print statement
@@ -401,19 +402,32 @@ cdef class Expression:
 
         return component
 
-    def __setitem__(self, int idx, value):
+    def __setitem__(self, int idx, Expression rhs):
 
-        cdef Expression rhs, lhs
-        cdef acado.Expression* _rhs
-        cdef acado.Expression* _lhs
         cdef unsigned int _idx = idx
 
-        rhs = as_expression(value)
+        cdef acado.Expression expression = deref(self._thisptr)
+        cdef acado.Operator* op = &expression.get_operator(_idx)
+    
+        # assign the expression to the operator
+        op.assign(deref(rhs._thisptr))
 
-        cdef acado.Expression exp = deref(self._thisptr)(_idx)
-        
-        # FIXME: get the assignment operator= to work with
-        exp = deref(rhs._thisptr) # assignment
+
+    def __getitem__(self, int idx):
+
+        cdef Expression rhs
+        cdef unsigned int _idx = idx
+
+        if self._thisptr.getNumRows() < _idx:
+            raise IndexError('Expression only has {} rows'.format(self._thisptr.getNumRows()))
+
+        cdef acado.Expression* exp = new acado.Expression(
+            self._thisptr.get_operator(_idx)
+        )
+
+        rhs = expression_from_ref(exp, owner=True)
+
+        return rhs
 
 
 cdef class ExpressionType(Expression):
@@ -443,7 +457,8 @@ cdef class DifferentialState(ExpressionType):
         - (name, nrows, ncols) 
         
         """
-    
+        self._owner = False
+
         if type(self) is DifferentialState:
             if initialize:
                 if _arg is not None:
@@ -453,8 +468,6 @@ cdef class DifferentialState(ExpressionType):
                 else:
                     self._thisptr = new acado.DifferentialState()       
                 self._owner = True
-            else:
-                self._owner = False
 
 cdef class IntermediateState(ExpressionType):
     """ Python wrapper of the IntermediateState class
@@ -470,6 +483,8 @@ cdef class IntermediateState(ExpressionType):
         cdef str name = ""
         cdef DMatrix _matrix
         cdef DVector _vector
+
+        self._owner = False
 
         if type(self) is IntermediateState:
             
@@ -496,8 +511,7 @@ cdef class IntermediateState(ExpressionType):
                     else:
                         raise RuntimeError('Unsupported constructor')
                 self._owner = True
-            else:
-                self._owner = False
+
 
 
 cdef class TIME(ExpressionType):
