@@ -59,6 +59,7 @@ def my_py_function(x_):
     x = x_[1]
     
     f_ = np.empty_like(x_)
+
     f_[0] = x*x + t
     f_[1] = t
 
@@ -68,14 +69,14 @@ class CFunctionTestCase(BaseAcadoTestCase):
 
     def test_cfunction_creation(self):
         
-        func = PyFunction(my_py_function, 2)
+        func = PyFunction(2, my_py_function)
 
         self.assertIsInstance(func, PyFunction)
 
     
     def test_cfunction___call__(self):
 
-        func = PyFunction(my_py_function, 2)
+        func = PyFunction(2, my_py_function)
 
         t = TIME()
         y = DifferentialState()
@@ -88,11 +89,17 @@ class CFunctionTestCase(BaseAcadoTestCase):
         result = func(x)
 
         self.assertIsInstance(result, Expression)
+        self.assertEqual(result.num_rows, x.num_rows)
+        self.assertEqual(result.num_cols, x.num_cols)
+        self.assertEqual(result.is_variable, x.is_variable)
+        self.assertEqual(result.dim, x.dim)
+
+        self.assertEqual(result.dim, func.dim)
 
 
     def test_full_example(self):
         
-        map_ = PyFunction(my_py_function, 2)
+        map_ = PyFunction(2, my_py_function)
 
         t = TIME()
         y = DifferentialState()
@@ -114,7 +121,7 @@ class CFunctionTestCase(BaseAcadoTestCase):
 
         xx = DVector(1) 
 
-        xx[0] = -3
+        xx[0] = 2.0
         tt    = 1.0
 
         zz.set_t( tt )
