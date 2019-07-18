@@ -75,8 +75,27 @@ class VariableTypesTestCase(BaseAcadoTestCase):
         i = IntermediateState("namne", 3, 4)
 
 
+    def test_set_and_getitem_(self):
+
+        t = TIME('t')
+        x = DifferentialState('x')
+
+        i = IntermediateState('i', 2)
+
+        self.assertEquals(i.num_rows, 2)
+
+        i[0] = x
+        i[1] = t
 
 
+        x_v = i[0]
+        t_v = i[1]
+
+        self.assertIsInstance(x_v, Expression)
+        self.assertIsInstance(t_v, Expression)
+
+
+ 
     def test_real_example(self):
 
         t = TIME()
